@@ -1,0 +1,172 @@
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  integer,
+  pgEnum,
+  uuid,
+  decimal,
+  jsonb,
+} from "drizzle-orm/pg-core";
+
+// ============================================
+// Better Auth tables
+// ============================================
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const verification = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+});
+
+// ============================================
+// Application tables
+// ============================================
+
+export const scanStatusEnum = pgEnum("scan_status", [
+  "pending",
+  "scanning",
+  "completed",
+  "failed",
+]);
+
+export const linkStatusEnum = pgEnum("link_status", [
+  "healthy",
+  "broken",
+  "redirect",
+  "timeout",
+  "unchecked",
+]);
+
+export const urls = pgTable("urls", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  title: text("title"),
+  platform: text("platform"),
+  totalLinks: integer("total_links").default(0),
+  brokenLinks: integer("broken_links").default(0),
+  lastScannedAt: timestamp("last_scanned_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const affiliateNetworks = pgTable("affiliate_networks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  domain: text("domain"),
+  patterns: jsonb("patterns").$type<string[]>().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const links = pgTable("links", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  urlId: uuid("url_id")
+    .notNull()
+    .references(() => urls.id, { onDelete: "cascade" }),
+  networkId: uuid("network_id").references(() => affiliateNetworks.id),
+  originalUrl: text("original_url").notNull(),
+  resolvedUrl: text("resolved_url"),
+  anchorText: text("anchor_text"),
+  status: linkStatusEnum("status").default("unchecked").notNull(),
+  httpStatusCode: integer("http_status_code"),
+  isAffiliate: boolean("is_affiliate").default(false).notNull(),
+  networkName: text("network_name"),
+  lastCheckedAt: timestamp("last_checked_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const scans = pgTable("scans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  urlId: uuid("url_id")
+    .notNull()
+    .references(() => urls.id, { onDelete: "cascade" }),
+  status: scanStatusEnum("status").default("pending").notNull(),
+  totalLinksFound: integer("total_links_found").default(0),
+  affiliateLinksFound: integer("affiliate_links_found").default(0),
+  brokenLinksFound: integer("broken_links_found").default(0),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const earnings = pgTable("earnings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  networkId: uuid("network_id").references(() => affiliateNetworks.id),
+  networkName: text("network_name").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("USD").notNull(),
+  period: text("period").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Type exports
+export type User = typeof user.$inferSelect;
+export type Url = typeof urls.$inferSelect;
+export type InsertUrl = typeof urls.$inferInsert;
+export type Link = typeof links.$inferSelect;
+export type InsertLink = typeof links.$inferInsert;
+export type AffiliateNetwork = typeof affiliateNetworks.$inferSelect;
+export type Scan = typeof scans.$inferSelect;
+export type InsertScan = typeof scans.$inferInsert;
+export type Earning = typeof earnings.$inferSelect;
+export type InsertEarning = typeof earnings.$inferInsert;
