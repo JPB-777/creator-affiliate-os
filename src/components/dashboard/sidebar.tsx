@@ -2,10 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { MenuIcon } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -16,7 +23,7 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
-export function Sidebar() {
+function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -27,12 +34,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-card">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/dashboard" className="text-lg font-bold">
-          Creator Affiliate OS
-        </Link>
-      </div>
+    <>
       <nav className="flex-1 space-y-1 p-3">
         {navItems.map((item) => {
           const isActive =
@@ -41,6 +43,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
@@ -63,6 +66,52 @@ export function Sidebar() {
           Sign out
         </Button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function Sidebar() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile header with hamburger */}
+      <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b bg-card px-4 md:hidden">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <MenuIcon className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
+        </button>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side="left" className="w-64 p-0">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <div className="flex h-14 items-center border-b px-4">
+              <Link href="/dashboard" className="text-lg font-bold">
+                AffiliateOS
+              </Link>
+            </div>
+            <div className="flex flex-1 flex-col">
+              <NavContent onNavigate={() => setOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
+        <Link href="/dashboard" className="ml-3 text-lg font-bold">
+          AffiliateOS
+        </Link>
+      </div>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden h-screen w-64 flex-col border-r bg-card md:flex">
+        <div className="flex h-14 items-center border-b px-4">
+          <Link href="/dashboard" className="text-lg font-bold">
+            AffiliateOS
+          </Link>
+        </div>
+        <NavContent />
+      </aside>
+    </>
   );
 }

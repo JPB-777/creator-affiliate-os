@@ -1,12 +1,33 @@
 {
-  "name": "creator-affiliate-os",
+  "name": "affiliateos",
   "version": "0.1.0",
-  "private": true,
+  "description": "Open-source affiliate link management platform for content creators",
+  "license": "BUSL-1.1",
+  "author": "[Your Name]",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/affiliateos.git"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/affiliateos",
+  "keywords": [
+    "affiliate",
+    "marketing",
+    "links",
+    "seo",
+    "ftc",
+    "disclosure",
+    "nextjs",
+    "open-source"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "dotenv -e .env.local -- tsx src/lib/db/seed.ts",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -18,6 +39,7 @@
     "drizzle-orm": "^0.45.1",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
+    "postgres": "^3.4.8",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "shadcn": "^4.0.2",
@@ -34,6 +56,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

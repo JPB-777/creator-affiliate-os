@@ -1,7 +1,7 @@
 export async function fetchPage(url: string) {
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "CreatorAffiliateOS/1.0 (link-scanner)",
+      "User-Agent": "AffiliateOS/1.0 (link-scanner)",
       Accept: "text/html",
     },
     redirect: "follow",

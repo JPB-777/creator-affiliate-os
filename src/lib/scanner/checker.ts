@@ -12,7 +12,7 @@ export async function checkLink(url: string): Promise<LinkCheckResult> {
       redirect: "follow",
       signal: AbortSignal.timeout(10000),
       headers: {
-        "User-Agent": "CreatorAffiliateOS/1.0 (link-checker)",
+        "User-Agent": "AffiliateOS/1.0 (link-checker)",
       },
     });
 

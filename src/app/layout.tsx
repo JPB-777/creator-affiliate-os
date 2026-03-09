@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Creator Affiliate OS",
+  title: "AffiliateOS",
   description: "Scan, track, and optimize your affiliate links",
 };
 

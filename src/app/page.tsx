@@ -34,7 +34,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <span className="text-lg font-bold">Creator Affiliate OS</span>
+          <span className="text-lg font-bold">AffiliateOS</span>
           <div className="flex gap-3">
             <Link
               href="/sign-in"
@@ -94,7 +94,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="mt-auto border-t py-6 text-center text-sm text-muted-foreground">
-        Creator Affiliate OS
+        AffiliateOS
       </footer>
     </div>
   );

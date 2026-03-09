@@ -50,7 +50,7 @@ export default function SignInPage() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
-          Sign in to your Creator Affiliate OS account
+          Sign in to your AffiliateOS account
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
