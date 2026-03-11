@@ -32,3 +32,12 @@ export async function recheckLink(id: string) {
   revalidatePath("/links");
   revalidatePath(`/urls/${link.urlId}`);
 }
+
+export async function suggestReplacement(linkId: string, newUrl: string) {
+  const user = await requireUser();
+  await db
+    .update(links)
+    .set({ suggestedReplacement: newUrl })
+    .where(and(eq(links.id, linkId), eq(links.userId, user.id)));
+  revalidatePath("/links");
+}

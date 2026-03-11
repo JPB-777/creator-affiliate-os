@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth-utils";
-import { getDashboardStats } from "@/server/queries/dashboard";
+import { getDashboardStats, getTopPerformingUrls } from "@/server/queries/dashboard";
+import Link from "next/link";
 import { getMonthlyEarnings } from "@/server/queries/earnings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +8,10 @@ import { EarningsChart } from "@/components/dashboard/earnings-chart";
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [stats, monthlyEarnings] = await Promise.all([
+  const [stats, monthlyEarnings, topUrls] = await Promise.all([
     getDashboardStats(user.id),
     getMonthlyEarnings(user.id),
+    getTopPerformingUrls(user.id),
   ]);
 
   return (
@@ -80,6 +82,40 @@ export default async function DashboardPage() {
           <EarningsChart data={monthlyEarnings} />
         </CardContent>
       </Card>
+
+      {/* Top Performing Content */}
+      {topUrls.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Performing Content</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topUrls.map((item) => (
+                <div
+                  key={item.urlId}
+                  className="flex items-center justify-between rounded-md border p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/urls/${item.urlId}`}
+                      className="text-sm font-medium hover:underline"
+                    >
+                      {item.urlTitle || item.urlUrl}
+                    </Link>
+                    <p className="text-xs text-muted-foreground">
+                      {item.networkCount} network{item.networkCount > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <span className="font-bold">
+                    ${parseFloat(item.totalEarnings).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Network Distribution */}
       {stats.networkDistribution.length > 0 && (

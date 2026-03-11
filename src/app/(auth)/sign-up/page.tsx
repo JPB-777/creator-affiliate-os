@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signUp } from "@/lib/auth-client";
+import { signUp, authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -106,6 +106,34 @@ export default function SignUpPage() {
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Sign up"}
+          </Button>
+          <div className="relative w-full">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() =>
+              authClient.signIn.social({ provider: "github", callbackURL: "/dashboard" })
+            }
+          >
+            Continue with GitHub
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() =>
+              authClient.signIn.social({ provider: "google", callbackURL: "/dashboard" })
+            }
+          >
+            Continue with Google
           </Button>
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}

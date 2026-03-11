@@ -11,18 +11,34 @@ import {
 } from "@/components/ui/table";
 import { AddEarningForm } from "@/components/earnings/add-earning-form";
 import { DeleteEarningButton } from "@/components/earnings/delete-earning-button";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { EarningFilters } from "@/components/earnings/earning-filters";
+import { ExportEarningsButton } from "@/components/earnings/export-button";
 
-export default async function EarningsPage() {
+export default async function EarningsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; search?: string; network?: string }>;
+}) {
   const user = await requireUser();
-  const [earningsList, summary] = await Promise.all([
-    getEarnings(user.id),
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+  const filters = {
+    search: params.search || undefined,
+    network: params.network || undefined,
+  };
+  const [{ data: earningsList, totalPages }, summary] = await Promise.all([
+    getEarnings(user.id, page, 20, filters),
     getEarningsSummary(user.id),
   ]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Earnings Tracker</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Earnings Tracker</h1>
+          <ExportEarningsButton />
+        </div>
         <p className="text-muted-foreground">
           Track your affiliate earnings by network and period
         </p>
@@ -74,6 +90,8 @@ export default async function EarningsPage() {
 
       <AddEarningForm />
 
+      <EarningFilters />
+
       <Card>
         <CardHeader>
           <CardTitle>Earnings History</CardTitle>
@@ -121,6 +139,8 @@ export default async function EarningsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <PaginationControls currentPage={page} totalPages={totalPages} />
     </div>
   );
 }

@@ -52,7 +52,7 @@ export function EarningsChart({ data }: { data: MonthlyEarning[] }) {
       <BarChart data={chartData}>
         <XAxis dataKey="period" tick={{ fontSize: 12 }} />
         <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
-        <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+        <Tooltip formatter={(value) => `$${Number(value).toFixed(2)}`} />
         <Legend />
         {networks.map((network, i) => (
           <Bar

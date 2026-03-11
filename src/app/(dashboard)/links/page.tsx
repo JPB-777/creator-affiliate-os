@@ -11,6 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { RecheckButton } from "@/components/links/recheck-button";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { LinkFilters } from "@/components/links/link-filters";
+import { ExportLinksButton } from "@/components/links/export-button";
+import { ReplaceLinkForm } from "@/components/links/replace-link-form";
 
 function statusColor(status: string) {
   switch (status) {
@@ -25,16 +29,29 @@ function statusColor(status: string) {
   }
 }
 
-export default async function LinksPage() {
+export default async function LinksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; search?: string; network?: string; status?: string }>;
+}) {
   const user = await requireUser();
-  const allLinks = await getAllUserLinks(user.id);
-  const affiliateLinks = allLinks.filter((l) => l.isAffiliate);
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+  const filters = {
+    search: params.search || undefined,
+    network: params.network || undefined,
+    status: params.status || undefined,
+  };
+  const { data: affiliateLinks, total, totalPages } = await getAllUserLinks(user.id, page, 20, filters);
   const brokenLinks = affiliateLinks.filter((l) => l.status === "broken");
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Affiliate Links</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Affiliate Links</h1>
+          <ExportLinksButton />
+        </div>
         <p className="text-muted-foreground">
           All affiliate links detected across your content
         </p>
@@ -46,7 +63,7 @@ export default async function LinksPage() {
             <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{affiliateLinks.length}</div>
+            <div className="text-2xl font-bold">{total}</div>
           </CardContent>
         </Card>
         <Card>
@@ -70,6 +87,8 @@ export default async function LinksPage() {
           </CardContent>
         </Card>
       </div>
+
+      <LinkFilters />
 
       {brokenLinks.length > 0 && (
         <div className="rounded-md border border-destructive/50 bg-destructive/5 p-4">
@@ -113,8 +132,14 @@ export default async function LinksPage() {
                   <TableCell className="text-muted-foreground">
                     {link.httpStatusCode ?? "-"}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="space-x-1">
                     <RecheckButton linkId={link.id} />
+                    {link.status === "broken" && (
+                      <ReplaceLinkForm
+                        linkId={link.id}
+                        currentReplacement={link.suggestedReplacement}
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -129,6 +154,8 @@ export default async function LinksPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <PaginationControls currentPage={page} totalPages={totalPages} />
     </div>
   );
 }

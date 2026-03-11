@@ -90,6 +90,7 @@ export const urls = pgTable("urls", {
   url: text("url").notNull(),
   title: text("title"),
   platform: text("platform"),
+  tags: jsonb("tags").$type<string[]>().default([]),
   totalLinks: integer("total_links").default(0),
   brokenLinks: integer("broken_links").default(0),
   lastScannedAt: timestamp("last_scanned_at"),
@@ -122,6 +123,7 @@ export const links = pgTable("links", {
   httpStatusCode: integer("http_status_code"),
   isAffiliate: boolean("is_affiliate").default(false).notNull(),
   networkName: text("network_name"),
+  suggestedReplacement: text("suggested_replacement"),
   lastCheckedAt: timestamp("last_checked_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -1,13 +1,39 @@
 import { db } from "@/lib/db";
 import { earnings } from "@/lib/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, count, ilike, or, type SQL, and } from "drizzle-orm";
 
-export async function getEarnings(userId: string) {
-  return db
+export async function getEarnings(
+  userId: string,
+  page: number = 1,
+  pageSize: number = 20,
+  filters?: { search?: string; network?: string }
+) {
+  const conditions: SQL[] = [eq(earnings.userId, userId)];
+
+  if (filters?.search) {
+    const term = `%${filters.search}%`;
+    conditions.push(or(ilike(earnings.networkName, term), ilike(earnings.notes, term))!);
+  }
+  if (filters?.network) {
+    conditions.push(eq(earnings.networkName, filters.network));
+  }
+
+  const where = and(...conditions);
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(earnings)
+    .where(where);
+
+  const data = await db
     .select()
     .from(earnings)
-    .where(eq(earnings.userId, userId))
-    .orderBy(desc(earnings.period), earnings.networkName);
+    .where(where)
+    .orderBy(desc(earnings.period), earnings.networkName)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  return { data, total, totalPages: Math.ceil(total / pageSize) };
 }
 
 export async function getEarningsSummary(userId: string) {

@@ -1,5 +1,7 @@
 import { requireUser } from "@/lib/auth-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UpdateProfileForm } from "@/components/settings/update-profile-form";
+import { ChangePasswordForm } from "@/components/settings/change-password-form";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -15,13 +17,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>Profile</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <span className="text-sm font-medium text-muted-foreground">
-              Name
-            </span>
-            <p>{user.name}</p>
-          </div>
+        <CardContent className="space-y-4">
           <div>
             <span className="text-sm font-medium text-muted-foreground">
               Email
@@ -34,6 +30,16 @@ export default async function SettingsPage() {
             </span>
             <p>{new Date(user.createdAt).toLocaleDateString()}</p>
           </div>
+          <UpdateProfileForm currentName={user.name ?? ""} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Change Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChangePasswordForm />
         </CardContent>
       </Card>
     </div>

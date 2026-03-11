@@ -1,13 +1,13 @@
 # AffiliateOS
 
 > Auto-maintained. Mis à jour après chaque tâche ou groupe de tâches.
-> Dernière mise à jour : 2026-03-10 (fix auth prod)
+> Dernière mise à jour : 2026-03-11 (9 features polish)
 
 ## Description
 
 AffiliateOS est une plateforme open-source de gestion de liens affiliés pour créateurs de contenu. Elle scanne des pages web pour détecter les liens affiliés de 10+ réseaux, vérifie leur santé (broken/healthy/redirect/timeout), suit les revenus par réseau et période, et génère des textes de divulgation FTC pour 5 types de contenu.
 
-Stack : Next.js 16 (App Router, React 19), TypeScript strict, Tailwind CSS v4 + shadcn/ui, Drizzle ORM + Neon PostgreSQL, Better Auth (email/password). Déployé sur Vercel avec Neon DB.
+Stack : Next.js 16 (App Router, React 19), TypeScript strict, Tailwind CSS v4 + shadcn/ui, Drizzle ORM + Neon PostgreSQL, Better Auth (email/password + OAuth GitHub/Google), next-themes (dark mode). Déployé sur Vercel avec Neon DB.
 
 ## Commandes
 
@@ -35,24 +35,28 @@ creator-affiliate-os/
 │   │   │   ├── sign-up/page.tsx      # Formulaire inscription (client component)
 │   │   │   └── layout.tsx            # Layout carte centrée
 │   │   ├── (dashboard)/              # Routes protégées (layout sidebar)
-│   │   │   ├── dashboard/page.tsx    # Stats, distribution réseaux, scans récents
-│   │   │   ├── urls/page.tsx         # Liste URLs avec formulaire ajout
+│   │   │   ├── dashboard/page.tsx    # Stats, top content, graphiques, scans récents
+│   │   │   ├── urls/page.tsx         # Liste URLs paginée avec filtres et tags
 │   │   │   ├── urls/[id]/page.tsx    # Détail URL : liens affiliés, autres liens, historique
-│   │   │   ├── links/page.tsx        # Table globale liens affiliés avec recheck
-│   │   │   ├── earnings/page.tsx     # Tracker revenus avec formulaire et historique
+│   │   │   ├── links/page.tsx        # Table liens affiliés avec filtres, export CSV, remplacement
+│   │   │   ├── earnings/page.tsx     # Tracker revenus avec filtres, export CSV, pagination
 │   │   │   ├── disclosures/page.tsx  # Générateur disclosures FTC (client component)
-│   │   │   ├── settings/page.tsx     # Profil read-only
+│   │   │   ├── settings/page.tsx     # Edit profil + change password
 │   │   │   └── layout.tsx            # Sidebar + contenu principal
 │   │   ├── api/auth/[...all]/        # Better Auth catch-all API
-│   │   ├── layout.tsx                # Root layout (Geist fonts, metadata)
+│   │   ├── api/export/links/         # Export CSV liens affiliés
+│   │   ├── api/export/earnings/      # Export CSV earnings
+│   │   ├── layout.tsx                # Root layout (Geist fonts, ThemeProvider)
 │   │   ├── page.tsx                  # Landing page publique
 │   │   └── globals.css               # Tailwind v4 + thème shadcn (light + dark)
 │   ├── components/
-│   │   ├── dashboard/sidebar.tsx     # Sidebar responsive (desktop + mobile sheet)
-│   │   ├── earnings/                 # AddEarningForm, DeleteEarningButton
-│   │   ├── links/recheck-button.tsx  # Recheck santé d'un lien individuel
-│   │   ├── urls/                     # AddUrlForm, UrlCard
-│   │   ├── ui/                       # Primitives shadcn/ui (18 composants)
+│   │   ├── dashboard/sidebar.tsx     # Sidebar responsive + ThemeToggle
+│   │   ├── dashboard/theme-toggle.tsx # Dark mode toggle (light/dark/system)
+│   │   ├── earnings/                 # AddEarningForm, DeleteEarningButton, EarningFilters, ExportButton
+│   │   ├── links/                    # RecheckButton, LinkFilters, ExportButton, ReplaceLinkForm
+│   │   ├── settings/                 # UpdateProfileForm, ChangePasswordForm
+│   │   ├── urls/                     # AddUrlForm, UrlCard, UrlFilters, TagEditor
+│   │   ├── ui/                       # Primitives shadcn/ui (19 composants)
 │   │   └── shared/                   # Vide
 │   ├── lib/
 │   │   ├── auth.ts                   # Config Better Auth serveur
@@ -72,15 +76,15 @@ creator-affiliate-os/
 │   │       └── networks.ts           # Définitions regex des réseaux affiliés
 │   ├── server/
 │   │   ├── actions/                  # Server Actions (mutations)
-│   │   │   ├── urls.ts               # addUrl, deleteUrl, rescanUrl
+│   │   │   ├── urls.ts               # addUrl, deleteUrl, rescanUrl, updateUrlTags
 │   │   │   ├── scans.ts              # triggerScan (pipeline complet)
 │   │   │   ├── earnings.ts           # addEarning, updateEarning, deleteEarning
-│   │   │   └── links.ts              # recheckLink
+│   │   │   └── links.ts              # recheckLink, suggestReplacement
 │   │   └── queries/                  # Data fetching (lecture seule)
-│   │       ├── dashboard.ts          # getDashboardStats
-│   │       ├── urls.ts               # getUserUrls, getUrlById
-│   │       ├── links.ts              # getLinksByUrl, getAllUserLinks, getBrokenLinks
-│   │       ├── earnings.ts           # getEarnings, getEarningsSummary
+│   │       ├── dashboard.ts          # getDashboardStats, getTopPerformingUrls
+│   │       ├── urls.ts               # getUserUrls (paginated + filtres)
+│   │       ├── links.ts              # getLinksByUrl, getAllUserLinks (paginated + filtres)
+│   │       ├── earnings.ts           # getEarnings (paginated + filtres), getEarningsSummary
 │   │       └── scans.ts              # getScanHistory, getLatestScan
 │   ├── middleware.ts                 # Protection routes via cookie session
 │   └── types/                        # Vide
@@ -108,7 +112,7 @@ creator-affiliate-os/
 ### Patterns
 - Server Components par défaut pour les pages (async + `requireUser()`)
 - `"use client"` pour formulaires et UI interactive
-- Server Actions pour toutes les mutations (pas d'API routes custom)
+- Server Actions pour mutations, API routes pour exports CSV
 - `revalidatePath()` après chaque mutation
 - `cn()` pour classes conditionnelles Tailwind
 - Toutes les queries filtrent par `userId` (multi-tenant par convention)
@@ -116,7 +120,7 @@ creator-affiliate-os/
 ### Auth
 - Middleware vérifie cookie `better-auth.session_token`
 - `requireUser()` : redirige vers `/sign-in` si pas de session
-- Client : `signIn.email()`, `signUp.email()`, `signOut()`
+- Client : `signIn.email()`, `signUp.email()`, `signOut()`, `signIn.social()`, `updateUser()`, `changePassword()`
 
 ### Scanner Pipeline
 1. `fetchPage()` → GET avec User-Agent custom, 15s timeout
@@ -145,18 +149,21 @@ creator-affiliate-os/
 - [x] Générateur disclosures FTC (5 types contenu)
 - [x] Landing page publique
 - [x] Sidebar responsive (desktop + mobile)
-- [ ] Page Settings fonctionnelle (edit profil, password)
-- [ ] Dark mode toggle
+- [x] Page Settings fonctionnelle (edit profil, password)
+- [x] Dark mode toggle (light/dark/system via next-themes)
 
 ### Features COULD (post-launch)
-- [ ] Pagination sur les listes
-- [ ] Search/filter sur les listes
-- [ ] Export CSV/PDF
+- [x] Pagination server-side sur toutes les listes (20/page)
+- [x] Search/filter sur links, URLs, earnings (ILIKE + selects)
+- [x] Export CSV (liens affiliés + earnings via API routes)
 - [x] Bulk URL import (max 20/batch, dedup, progress)
 - [x] Email notifications liens brisés (Resend, best-effort)
 - [x] Dashboard graphiques revenus (Recharts, stacked bar par réseau)
 - [x] Scan récurrent automatique (Vercel Cron, 1x/jour 6h UTC, 10 URLs/run)
-- [ ] OAuth providers (Google, GitHub)
+- [x] OAuth providers (Google, GitHub) via Better Auth socialProviders
+- [x] Tags/catégories sur URLs (JSONB)
+- [x] Top Performing Content (dashboard, JOIN earnings ↔ links ↔ urls)
+- [x] Remplacement liens broken (input inline + clipboard copy)
 - [ ] UI edit earnings (action existe, pas de UI)
 - [ ] Error boundaries (`error.tsx`)
 - [ ] Loading states (`loading.tsx`)
@@ -192,6 +199,10 @@ creator-affiliate-os/
 | `NEXT_PUBLIC_APP_URL` | Oui | URL publique app (client-side) | client |
 | `RESEND_API_KEY` | Non | Clé API Resend pour alertes email (gratuit 3k/mois) | server |
 | `CRON_SECRET` | Non | Secret Vercel pour sécuriser les endpoints cron (auto-fourni par Vercel) | server |
+| `GITHUB_CLIENT_ID` | Non | OAuth GitHub app client ID | server |
+| `GITHUB_CLIENT_SECRET` | Non | OAuth GitHub app client secret | server |
+| `GOOGLE_CLIENT_ID` | Non | OAuth Google app client ID | server |
+| `GOOGLE_CLIENT_SECRET` | Non | OAuth Google app client secret | server |
 
 ### Règles métier
 - Chaque scan remplace tous les liens précédents pour cette URL (pas incrémental)
@@ -206,8 +217,9 @@ creator-affiliate-os/
 - License BSL 1.1 → ne peut pas être utilisé pour offrir un service hébergé concurrent avant 2029-03-08
 
 ### Intégrations
-- **Neon** : PostgreSQL serverless (seule dépendance externe)
-- Pas d'analytics, email, paiement, ou API externe
+- **Neon** : PostgreSQL serverless
+- **Resend** : Alertes email (optionnel, 3k/mois gratuit)
+- **GitHub/Google OAuth** : Login social (optionnel, credentials requis)
 
 ### Hypothèses actives
 - [HYPOTHÈSE] Les secrets Vercel sont configurés correctement pour `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`
@@ -218,7 +230,7 @@ creator-affiliate-os/
 ### Décisions prises
 - Vercel pour hosting (auto-deploy via Git Integration, pas GitHub Actions)
 - Neon pour PostgreSQL serverless
-- Better Auth pour auth (email/password seulement)
+- Better Auth pour auth (email/password + OAuth GitHub/Google)
 - Drizzle ORM (pas Prisma)
 - standalone output pour compatibilité Docker
 - shadcn/ui base-nova style
@@ -265,3 +277,4 @@ creator-affiliate-os/
 | 2026-03-10 | Reformaté au format framework Product Strategist. Ajout contexte déploiement Vercel + Neon. Phases 1-3 marquées complétées. Scope freeze appliqué. |
 | 2026-03-10 | Fix: ajout `baseURL: process.env.BETTER_AUTH_URL` dans `src/lib/auth.ts`. Sign-in échouait en prod car Better Auth ne pouvait pas setter le cookie de session sans baseURL explicite. |
 | 2026-03-10 | Feat: 4 features high-impact — Bulk import URLs (20/batch, dedup), Dashboard graphiques revenus (Recharts stacked bar), Alertes email liens brisés (Resend), Scan récurrent Vercel Cron (1x/jour, 10 URLs/run). Deps ajoutées : recharts, resend. |
+| 2026-03-11 | Feat: 9 features polish — Dark mode toggle (next-themes), Settings edit profil + password, Pagination server-side (3 pages), Search/filtres (links, URLs, earnings), Tags JSONB sur URLs, Top Performing Content (dashboard), Export CSV (links + earnings), OAuth GitHub/Google, Remplacement liens broken. Migration `0001_add_tags_and_replacement`. Dep ajoutée : next-themes. |

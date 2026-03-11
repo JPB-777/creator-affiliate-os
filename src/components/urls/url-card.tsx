@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Url } from "@/lib/db/schema";
 import { useState } from "react";
+import { TagEditor } from "@/components/urls/tag-editor";
 
 export function UrlCard({ url }: { url: Url }) {
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,9 @@ export function UrlCard({ url }: { url: Url }) {
                 {new Date(url.lastScannedAt).toLocaleDateString()}
               </span>
             )}
+          </div>
+          <div className="mt-1.5">
+            <TagEditor urlId={url.id} initialTags={(url.tags as string[]) ?? []} />
           </div>
         </div>
         <div className="flex gap-2">

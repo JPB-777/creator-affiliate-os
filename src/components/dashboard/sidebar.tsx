@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { MenuIcon } from "lucide-react";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -57,7 +58,8 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
-      <div className="border-t p-3">
+      <div className="border-t p-3 space-y-1">
+        <ThemeToggle />
         <Button
           variant="ghost"
           className="w-full justify-start text-muted-foreground"

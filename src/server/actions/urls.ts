@@ -104,6 +104,15 @@ export async function bulkAddUrls(formData: FormData) {
   return results;
 }
 
+export async function updateUrlTags(urlId: string, tags: string[]) {
+  const user = await requireUser();
+  await db
+    .update(urls)
+    .set({ tags, updatedAt: new Date() })
+    .where(and(eq(urls.id, urlId), eq(urls.userId, user.id)));
+  revalidatePath("/urls");
+}
+
 export async function rescanUrl(id: string) {
   const user = await requireUser();
   await triggerScan(id, user.id);

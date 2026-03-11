@@ -2,10 +2,22 @@ import { requireUser } from "@/lib/auth-utils";
 import { getUserUrls } from "@/server/queries/urls";
 import { AddUrlForm } from "@/components/urls/add-url-form";
 import { UrlCard } from "@/components/urls/url-card";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { UrlFilters } from "@/components/urls/url-filters";
 
-export default async function UrlsPage() {
+export default async function UrlsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; search?: string; platform?: string }>;
+}) {
   const user = await requireUser();
-  const userUrls = await getUserUrls(user.id);
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+  const filters = {
+    search: params.search || undefined,
+    platform: params.platform || undefined,
+  };
+  const { data: userUrls, totalPages } = await getUserUrls(user.id, page, 20, filters);
 
   return (
     <div className="space-y-6">
@@ -17,6 +29,8 @@ export default async function UrlsPage() {
       </div>
 
       <AddUrlForm />
+
+      <UrlFilters />
 
       <div className="space-y-3">
         {userUrls.map((url) => (
@@ -30,6 +44,8 @@ export default async function UrlsPage() {
           </div>
         )}
       </div>
+
+      <PaginationControls currentPage={page} totalPages={totalPages} />
     </div>
   );
 }
