@@ -1,7 +1,7 @@
 # AffiliateOS
 
 > Auto-maintained. Mis à jour après chaque tâche ou groupe de tâches.
-> Dernière mise à jour : 2026-03-11 (9 features polish)
+> Dernière mise à jour : 2026-03-11 (marketing pages + cohérence pricing)
 
 ## Description
 
@@ -46,8 +46,12 @@ creator-affiliate-os/
 │   │   ├── api/auth/[...all]/        # Better Auth catch-all API
 │   │   ├── api/export/links/         # Export CSV liens affiliés
 │   │   ├── api/export/earnings/      # Export CSV earnings
-│   │   ├── layout.tsx                # Root layout (Geist fonts, ThemeProvider)
-│   │   ├── page.tsx                  # Landing page publique
+│   │   ├── blog/
+│   │   │   ├── page.tsx              # Blog listing
+│   │   │   └── how-to-find-broken-affiliate-links/page.tsx  # Article SEO
+│   │   ├── pricing/page.tsx          # Page pricing (3 tiers)
+│   │   ├── layout.tsx                # Root layout (Geist fonts, ThemeProvider, SEO meta)
+│   │   ├── page.tsx                  # Landing page publique (hero, features, pricing preview, FAQ)
 │   │   └── globals.css               # Tailwind v4 + thème shadcn (light + dark)
 │   ├── components/
 │   │   ├── dashboard/sidebar.tsx     # Sidebar responsive + ThemeToggle
@@ -174,7 +178,8 @@ creator-affiliate-os/
 - Rate limiting
 - Background jobs / queues
 - Team/org features
-- AffiliateOS Cloud (SaaS hébergé)
+- Billing / tiers / plans (pas de logique de plan dans le code — pricing page marketing existe mais aucun enforcement)
+- Cloud Pro features (advanced analytics, team collab, API access — marqué "Coming soon")
 
 ## Contexte Produit
 
@@ -185,7 +190,7 @@ creator-affiliate-os/
 - **Fonctionnalités MUST** : Auth, scanner URL, health check liens, dashboard, earnings tracker
 - **Fonctionnalités SHOULD** : Disclosures FTC, landing page, responsive sidebar
 - **Fonctionnalités COULD** : Pagination, search, export, bulk import, notifications
-- **Hors-scope** : Tests, API, rate limiting, teams, SaaS cloud
+- **Hors-scope** : Tests, API, rate limiting, teams, billing/tiers
 
 ## Contexte Critique
 
@@ -278,3 +283,5 @@ creator-affiliate-os/
 | 2026-03-10 | Fix: ajout `baseURL: process.env.BETTER_AUTH_URL` dans `src/lib/auth.ts`. Sign-in échouait en prod car Better Auth ne pouvait pas setter le cookie de session sans baseURL explicite. |
 | 2026-03-10 | Feat: 4 features high-impact — Bulk import URLs (20/batch, dedup), Dashboard graphiques revenus (Recharts stacked bar), Alertes email liens brisés (Resend), Scan récurrent Vercel Cron (1x/jour, 10 URLs/run). Deps ajoutées : recharts, resend. |
 | 2026-03-11 | Feat: 9 features polish — Dark mode toggle (next-themes), Settings edit profil + password, Pagination server-side (3 pages), Search/filtres (links, URLs, earnings), Tags JSONB sur URLs, Top Performing Content (dashboard), Export CSV (links + earnings), OAuth GitHub/Google, Remplacement liens broken. Migration `0001_add_tags_and_replacement`. Dep ajoutée : next-themes. |
+| 2026-03-11 | Marketing: Refonte landing page (hero, features, how-it-works, pricing preview, FAQ, CTA). SEO meta tags + OG tags dans layout.tsx. README pro (badges, screenshots, quick start). Page /pricing (3 tiers). Blog engine + article SEO `/blog/how-to-find-broken-affiliate-links`. |
+| 2026-03-11 | Fix cohérence: Pricing aligné sur le code réel — Cloud Free = Unlimited URLs (pas de fausse limite 25), Pro = "Coming soon" avec features futures honnêtes, pas de "Hourly auto-scans" inexistant. CLAUDE.md mis à jour (nouvelles routes, hors-scope corrigé). |
