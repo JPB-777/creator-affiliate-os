@@ -152,8 +152,10 @@ creator-affiliate-os/
 - [ ] Pagination sur les listes
 - [ ] Search/filter sur les listes
 - [ ] Export CSV/PDF
-- [ ] Bulk URL import
-- [ ] Email notifications liens brisés
+- [x] Bulk URL import (max 20/batch, dedup, progress)
+- [x] Email notifications liens brisés (Resend, best-effort)
+- [x] Dashboard graphiques revenus (Recharts, stacked bar par réseau)
+- [x] Scan récurrent automatique (Vercel Cron, 1x/jour 6h UTC, 10 URLs/run)
 - [ ] OAuth providers (Google, GitHub)
 - [ ] UI edit earnings (action existe, pas de UI)
 - [ ] Error boundaries (`error.tsx`)
@@ -188,6 +190,8 @@ creator-affiliate-os/
 | `BETTER_AUTH_SECRET` | Oui | Secret pour signing auth tokens | server |
 | `BETTER_AUTH_URL` | Oui | URL canonique app (server-side) | server |
 | `NEXT_PUBLIC_APP_URL` | Oui | URL publique app (client-side) | client |
+| `RESEND_API_KEY` | Non | Clé API Resend pour alertes email (gratuit 3k/mois) | server |
+| `CRON_SECRET` | Non | Secret Vercel pour sécuriser les endpoints cron (auto-fourni par Vercel) | server |
 
 ### Règles métier
 - Chaque scan remplace tous les liens précédents pour cette URL (pas incrémental)
@@ -260,3 +264,4 @@ creator-affiliate-os/
 | 2026-03-10 | CLAUDE.md initial créé depuis analyse complète du codebase |
 | 2026-03-10 | Reformaté au format framework Product Strategist. Ajout contexte déploiement Vercel + Neon. Phases 1-3 marquées complétées. Scope freeze appliqué. |
 | 2026-03-10 | Fix: ajout `baseURL: process.env.BETTER_AUTH_URL` dans `src/lib/auth.ts`. Sign-in échouait en prod car Better Auth ne pouvait pas setter le cookie de session sans baseURL explicite. |
+| 2026-03-10 | Feat: 4 features high-impact — Bulk import URLs (20/batch, dedup), Dashboard graphiques revenus (Recharts stacked bar), Alertes email liens brisés (Resend), Scan récurrent Vercel Cron (1x/jour, 10 URLs/run). Deps ajoutées : recharts, resend. |

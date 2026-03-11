@@ -1,11 +1,16 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getDashboardStats } from "@/server/queries/dashboard";
+import { getMonthlyEarnings } from "@/server/queries/earnings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EarningsChart } from "@/components/dashboard/earnings-chart";
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const stats = await getDashboardStats(user.id);
+  const [stats, monthlyEarnings] = await Promise.all([
+    getDashboardStats(user.id),
+    getMonthlyEarnings(user.id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -65,6 +70,16 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Earnings Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Earnings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EarningsChart data={monthlyEarnings} />
+        </CardContent>
+      </Card>
 
       {/* Network Distribution */}
       {stats.networkDistribution.length > 0 && (

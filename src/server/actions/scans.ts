@@ -7,6 +7,8 @@ import { fetchPage } from "@/lib/scanner/fetcher";
 import { extractLinks, extractTitle } from "@/lib/scanner/parser";
 import { detectAffiliateLinks } from "@/lib/scanner/detector";
 import { checkLinks } from "@/lib/scanner/checker";
+import { sendBrokenLinksAlert } from "@/lib/email";
+import { user as userTable } from "@/lib/db/schema";
 
 export async function triggerScan(urlId: string, userId: string) {
   // Create scan record
@@ -68,8 +70,9 @@ export async function triggerScan(urlId: string, userId: string) {
       .map((l) => l.href);
 
     let brokenCount = 0;
+    let checkResults: Awaited<ReturnType<typeof checkLinks>> = [];
     if (affiliateUrls.length > 0) {
-      const checkResults = await checkLinks(affiliateUrls, 5);
+      checkResults = await checkLinks(affiliateUrls, 5);
 
       // Update link statuses
       for (const result of checkResults) {
@@ -116,6 +119,38 @@ export async function triggerScan(urlId: string, userId: string) {
         updatedAt: new Date(),
       })
       .where(eq(urls.id, urlId));
+
+    // Send broken links email alert
+    if (brokenCount > 0) {
+      try {
+        const [userData] = await db
+          .select({ email: userTable.email })
+          .from(userTable)
+          .where(eq(userTable.id, userId));
+
+        if (userData?.email) {
+          const brokenDetails = checkResults
+            .filter((r) => r.status === "broken")
+            .map((r) => {
+              const link = detected.find((l) => l.href === r.url);
+              return {
+                url: r.url,
+                network: link?.networkName || null,
+                httpStatus: r.httpStatusCode,
+              };
+            });
+
+          await sendBrokenLinksAlert(
+            userData.email,
+            brokenDetails,
+            title || urlRecord.url,
+            urlRecord.url
+          );
+        }
+      } catch {
+        // Email alert is best-effort, don't fail the scan
+      }
+    }
   } catch (error) {
     await db
       .update(scans)

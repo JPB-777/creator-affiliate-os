@@ -47,3 +47,18 @@ export async function getEarningsSummary(userId: string) {
     topNetwork: topNetwork[0] ?? null,
   };
 }
+
+export async function getMonthlyEarnings(userId: string) {
+  const rows = await db
+    .select({
+      period: earnings.period,
+      network: earnings.networkName,
+      total: sql<string>`sum(${earnings.amount}::numeric)::text`,
+    })
+    .from(earnings)
+    .where(eq(earnings.userId, userId))
+    .groupBy(earnings.period, earnings.networkName)
+    .orderBy(earnings.period);
+
+  return rows;
+}
