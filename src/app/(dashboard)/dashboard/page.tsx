@@ -1,7 +1,11 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getDashboardStats, getTopPerformingUrls } from "@/server/queries/dashboard";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getMonthlyEarnings } from "@/server/queries/earnings";
+import { isOnboardingComplete } from "@/server/queries/onboarding";
+import { getHealthScore } from "@/server/queries/health-score";
+import { HealthScoreGauge } from "@/components/dashboard/health-score-gauge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EarningsChart } from "@/components/dashboard/earnings-chart";
@@ -9,15 +13,27 @@ import { StatCard } from "@/components/shared/stat-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AnimatedLayout } from "@/components/shared/animated-layout";
+import { getPeriodComparison } from "@/server/queries/comparison";
+import { fetchPeriodComparison } from "@/server/actions/comparison";
+import { PeriodComparison } from "@/components/dashboard/period-comparison";
 import { Globe, Link2, AlertTriangle, DollarSign, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [stats, monthlyEarnings, topUrls] = await Promise.all([
+
+  // Redirect new users to onboarding
+  const onboarded = await isOnboardingComplete(user.id);
+  if (!onboarded) {
+    redirect("/onboarding");
+  }
+
+  const [stats, monthlyEarnings, topUrls, healthScore, comparison] = await Promise.all([
     getDashboardStats(user.id),
     getMonthlyEarnings(user.id),
     getTopPerformingUrls(user.id),
+    getHealthScore(user.id),
+    getPeriodComparison(user.id, "month"),
   ]);
 
   return (
@@ -27,6 +43,15 @@ export default async function DashboardPage() {
           title="Dashboard"
           description={`Welcome back, ${user.name}`}
         />
+
+        {/* Health Score */}
+        {stats.totalUrls > 0 && (
+          <HealthScoreGauge
+            overall={healthScore.overall}
+            grade={healthScore.grade}
+            breakdown={healthScore.breakdown}
+          />
+        )}
 
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -41,12 +66,14 @@ export default async function DashboardPage() {
             value={stats.totalAffiliateLinks}
             icon={<Link2 />}
           />
-          <StatCard
-            label="Broken Links"
-            value={stats.brokenLinks}
-            icon={<AlertTriangle />}
-            color="destructive"
-          />
+          <Link href="/broken-links">
+            <StatCard
+              label="Broken Links"
+              value={stats.brokenLinks}
+              icon={<AlertTriangle />}
+              color="destructive"
+            />
+          </Link>
           <StatCard
             label="Total Earnings"
             value={`$${parseFloat(stats.totalEarnings).toFixed(2)}`}
@@ -64,6 +91,12 @@ export default async function DashboardPage() {
             <EarningsChart data={monthlyEarnings} />
           </CardContent>
         </Card>
+
+        {/* Period Comparison */}
+        <PeriodComparison
+          initialData={comparison}
+          fetchComparison={fetchPeriodComparison}
+        />
 
         {/* Two-column layout for secondary sections */}
         <div className="grid gap-6 lg:grid-cols-2">

@@ -28,9 +28,16 @@ const NETWORKS = [
   "Other",
 ];
 
-export function AddEarningForm() {
+interface UrlOption {
+  id: string;
+  title: string | null;
+  url: string;
+}
+
+export function AddEarningForm({ urls = [] }: { urls?: UrlOption[] }) {
   const [loading, setLoading] = useState(false);
   const [network, setNetwork] = useState("");
+  const [urlId, setUrlId] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const now = new Date();
@@ -39,11 +46,13 @@ export function AddEarningForm() {
   async function handleSubmit(formData: FormData) {
     if (!network) return;
     formData.set("networkName", network);
+    if (urlId) formData.set("urlId", urlId);
     setLoading(true);
     try {
       await addEarning(formData);
       toast.success("Earning added");
       setNetwork("");
+      setUrlId("");
       formRef.current?.reset();
     } finally {
       setLoading(false);
@@ -69,6 +78,21 @@ export function AddEarningForm() {
               ))}
             </SelectContent>
           </Select>
+          {urls.length > 0 && (
+            <Select value={urlId} onValueChange={(v) => setUrlId(!v || v === "__none__" ? "" : v)}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Link to URL (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">No specific URL</SelectItem>
+                {urls.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.title || new URL(u.url).pathname.slice(0, 40) || u.url.slice(0, 40)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Input
             name="amount"
             type="number"

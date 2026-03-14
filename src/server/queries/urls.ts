@@ -51,3 +51,27 @@ export async function getStaleUrlsForCron(limit: number = 10) {
     .orderBy(asc(sql`coalesce(${urls.lastScannedAt}, '1970-01-01')`))
     .limit(limit);
 }
+
+export async function getUrlsDueForScan(limit: number = 10) {
+  // Calculate which URLs are due based on their scanFrequency
+  return db
+    .select({ id: urls.id, userId: urls.userId, url: urls.url })
+    .from(urls)
+    .where(
+      and(
+        sql`${urls.scanFrequency} != 'manual'`,
+        or(
+          sql`${urls.lastScannedAt} IS NULL`,
+          sql`CASE ${urls.scanFrequency}
+            WHEN 'daily' THEN ${urls.lastScannedAt} < now() - interval '1 day'
+            WHEN 'weekly' THEN ${urls.lastScannedAt} < now() - interval '7 days'
+            WHEN 'biweekly' THEN ${urls.lastScannedAt} < now() - interval '14 days'
+            WHEN 'monthly' THEN ${urls.lastScannedAt} < now() - interval '30 days'
+            ELSE false
+          END`
+        )
+      )
+    )
+    .orderBy(asc(sql`coalesce(${urls.lastScannedAt}, '1970-01-01')`))
+    .limit(limit);
+}

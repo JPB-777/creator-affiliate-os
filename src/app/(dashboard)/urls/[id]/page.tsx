@@ -2,6 +2,8 @@ import { requireUser } from "@/lib/auth-utils";
 import { getUrlById } from "@/server/queries/urls";
 import { getLinksByUrl } from "@/server/queries/links";
 import { getScanHistory } from "@/server/queries/scans";
+import { getEarningsByUrl, getUrlEarningsTotal } from "@/server/queries/earnings";
+import { getUrlHealthTimeline } from "@/server/queries/link-history";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +16,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { Link2, AlertTriangle, ExternalLink } from "lucide-react";
+import { Link2, AlertTriangle, ExternalLink, DollarSign, Activity } from "lucide-react";
 import { AnimatedLayout } from "@/components/shared/animated-layout";
+import { LinkHistoryChart } from "@/components/links/link-history-chart";
 
 function statusColor(status: string) {
   switch (status) {
@@ -42,9 +45,12 @@ export default async function UrlDetailPage({
   const url = await getUrlById(id, user.id);
   if (!url) notFound();
 
-  const [urlLinks, scanHistory] = await Promise.all([
+  const [urlLinks, scanHistory, urlEarnings, urlEarningsTotal, healthTimeline] = await Promise.all([
     getLinksByUrl(id, user.id),
     getScanHistory(id, user.id),
+    getEarningsByUrl(id, user.id),
+    getUrlEarningsTotal(id, user.id),
+    getUrlHealthTimeline(id, user.id),
   ]);
 
   const affiliateLinks = urlLinks.filter((l) => l.isAffiliate);
@@ -61,7 +67,7 @@ export default async function UrlDetailPage({
         <p className="truncate text-sm text-muted-foreground">{url.url}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -97,7 +103,31 @@ export default async function UrlDetailPage({
             <div className="text-2xl font-bold font-mono tabular-nums">{urlLinks.length}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Earnings
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-success" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-mono tabular-nums text-success">
+              ${parseFloat(urlEarningsTotal).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Link Health History */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Link Health History (30 days)</CardTitle>
+          <Activity className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <LinkHistoryChart data={healthTimeline} />
+        </CardContent>
+      </Card>
 
       {/* Affiliate Links Table */}
       {affiliateLinks.length > 0 && (
@@ -139,6 +169,39 @@ export default async function UrlDetailPage({
                     <TableCell className="text-muted-foreground">
                       {link.httpStatusCode ?? "-"}
                     </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* URL Earnings */}
+      {urlEarnings.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Earnings from this URL</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Period</TableHead>
+                  <TableHead>Network</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {urlEarnings.map((e) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="font-medium">{e.period}</TableCell>
+                    <TableCell>{e.networkName}</TableCell>
+                    <TableCell className="font-mono tabular-nums">
+                      ${parseFloat(e.amount).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{e.notes ?? "-"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

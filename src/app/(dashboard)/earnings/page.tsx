@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth-utils";
 import { getEarnings, getEarningsSummary } from "@/server/queries/earnings";
+import { getUserUrls } from "@/server/queries/urls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -30,10 +31,14 @@ export default async function EarningsPage({
     search: params.search || undefined,
     network: params.network || undefined,
   };
-  const [{ data: earningsList, totalPages }, summary] = await Promise.all([
+  const [{ data: earningsList, totalPages }, summary, { data: allUrls }] = await Promise.all([
     getEarnings(user.id, page, 20, filters),
     getEarningsSummary(user.id),
+    getUserUrls(user.id, 1, 200),
   ]);
+
+  const urlOptions = allUrls.map((u) => ({ id: u.id, title: u.title, url: u.url }));
+  const urlMap = new Map(allUrls.map((u) => [u.id, u]));
 
   return (
     <AnimatedLayout>
@@ -91,7 +96,7 @@ export default async function EarningsPage({
         </Card>
       </div>
 
-      <AddEarningForm />
+      <AddEarningForm urls={urlOptions} />
 
       <EarningFilters />
 
@@ -106,31 +111,44 @@ export default async function EarningsPage({
                 <TableHead>Period</TableHead>
                 <TableHead>Network</TableHead>
                 <TableHead>Amount</TableHead>
+                <TableHead>URL</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {earningsList.map((earning) => (
-                <TableRow key={earning.id}>
-                  <TableCell className="font-medium">
-                    {earning.period}
-                  </TableCell>
-                  <TableCell>{earning.networkName}</TableCell>
-                  <TableCell>
-                    ${parseFloat(earning.amount).toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {earning.notes ?? "-"}
-                  </TableCell>
-                  <TableCell>
-                    <DeleteEarningButton earningId={earning.id} />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {earningsList.map((earning) => {
+                const linkedUrl = earning.urlId ? urlMap.get(earning.urlId) : null;
+                return (
+                  <TableRow key={earning.id}>
+                    <TableCell className="font-medium">
+                      {earning.period}
+                    </TableCell>
+                    <TableCell>{earning.networkName}</TableCell>
+                    <TableCell className="font-mono tabular-nums">
+                      ${parseFloat(earning.amount).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                      {linkedUrl ? (
+                        <a href={`/urls/${linkedUrl.id}`} className="hover:underline text-primary">
+                          {linkedUrl.title || linkedUrl.url.replace(/^https?:\/\//, "").slice(0, 30)}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground/50">&mdash;</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {earning.notes ?? "-"}
+                    </TableCell>
+                    <TableCell>
+                      <DeleteEarningButton earningId={earning.id} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {earningsList.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-16 text-center">
+                  <TableCell colSpan={6} className="py-16 text-center">
                     <div className="flex flex-col items-center">
                       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                         <DollarSign className="h-6 w-6 text-muted-foreground" />

@@ -1,0 +1,2 @@
+CREATE TYPE "public"."scan_frequency" AS ENUM('daily', 'weekly', 'biweekly', 'monthly', 'manual');--> statement-breakpoint
+ALTER TABLE "urls" ADD COLUMN "scan_frequency" "scan_frequency" DEFAULT 'daily' NOT NULL;

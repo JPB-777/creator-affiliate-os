@@ -8,6 +8,7 @@ import { AnimatedLayout } from "@/components/shared/animated-layout";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Globe } from "lucide-react";
+import { SitemapImport } from "@/components/urls/sitemap-import";
 
 export default async function UrlsPage({
   searchParams,
@@ -31,7 +32,10 @@ export default async function UrlsPage({
           description="Add pages to scan for affiliate links"
         />
 
-        <AddUrlForm />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <AddUrlForm />
+          <SitemapImport />
+        </div>
 
         <UrlFilters />
 

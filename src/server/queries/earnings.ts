@@ -1,12 +1,12 @@
 import { db } from "@/lib/db";
-import { earnings } from "@/lib/db/schema";
+import { earnings, urls } from "@/lib/db/schema";
 import { eq, desc, sql, count, ilike, or, type SQL, and } from "drizzle-orm";
 
 export async function getEarnings(
   userId: string,
   page: number = 1,
   pageSize: number = 20,
-  filters?: { search?: string; network?: string }
+  filters?: { search?: string; network?: string; urlId?: string }
 ) {
   const conditions: SQL[] = [eq(earnings.userId, userId)];
 
@@ -16,6 +16,9 @@ export async function getEarnings(
   }
   if (filters?.network) {
     conditions.push(eq(earnings.networkName, filters.network));
+  }
+  if (filters?.urlId) {
+    conditions.push(eq(earnings.urlId, filters.urlId));
   }
 
   const where = and(...conditions);
@@ -87,4 +90,31 @@ export async function getMonthlyEarnings(userId: string) {
     .orderBy(earnings.period);
 
   return rows;
+}
+
+export async function getEarningsByUrl(urlId: string, userId: string) {
+  const rows = await db
+    .select({
+      id: earnings.id,
+      networkName: earnings.networkName,
+      amount: earnings.amount,
+      period: earnings.period,
+      notes: earnings.notes,
+    })
+    .from(earnings)
+    .where(and(eq(earnings.urlId, urlId), eq(earnings.userId, userId)))
+    .orderBy(desc(earnings.period));
+
+  return rows;
+}
+
+export async function getUrlEarningsTotal(urlId: string, userId: string) {
+  const [result] = await db
+    .select({
+      total: sql<string>`coalesce(sum(${earnings.amount}::numeric), 0)::text`,
+    })
+    .from(earnings)
+    .where(and(eq(earnings.urlId, urlId), eq(earnings.userId, userId)));
+
+  return result?.total ?? "0";
 }

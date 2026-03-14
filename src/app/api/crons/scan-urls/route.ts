@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStaleUrlsForCron } from "@/server/queries/urls";
+import { getUrlsDueForScan } from "@/server/queries/urls";
 import { triggerScan } from "@/server/actions/scans";
 
 export async function GET(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const urlsToScan = await getStaleUrlsForCron(10);
+  const urlsToScan = await getUrlsDueForScan(10);
   const results: { url: string; status: "success" | "error"; error?: string }[] = [];
 
   for (const urlRecord of urlsToScan) {

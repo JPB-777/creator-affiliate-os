@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Url } from "@/lib/db/schema";
 import { useState } from "react";
 import { TagEditor } from "@/components/urls/tag-editor";
+import { ScanFrequencySelect } from "@/components/urls/scan-frequency-select";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
@@ -58,8 +59,9 @@ export function UrlCard({ url }: { url: Url }) {
               </span>
             )}
           </div>
-          <div className="mt-1.5">
+          <div className="mt-1.5 flex items-center gap-3">
             <TagEditor urlId={url.id} initialTags={(url.tags as string[]) ?? []} />
+            <ScanFrequencySelect urlId={url.id} current={url.scanFrequency} />
           </div>
         </div>
         <div className="flex gap-2">

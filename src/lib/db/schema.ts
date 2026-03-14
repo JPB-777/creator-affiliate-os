@@ -82,6 +82,22 @@ export const linkStatusEnum = pgEnum("link_status", [
   "unchecked",
 ]);
 
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "broken_link",
+  "scan_complete",
+  "scan_failed",
+  "weekly_report",
+  "system",
+]);
+
+export const scanFrequencyEnum = pgEnum("scan_frequency", [
+  "daily",
+  "weekly",
+  "biweekly",
+  "monthly",
+  "manual",
+]);
+
 export const urls = pgTable("urls", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id")
@@ -93,6 +109,7 @@ export const urls = pgTable("urls", {
   tags: jsonb("tags").$type<string[]>().default([]),
   totalLinks: integer("total_links").default(0),
   brokenLinks: integer("broken_links").default(0),
+  scanFrequency: scanFrequencyEnum("scan_frequency").default("daily").notNull(),
   lastScannedAt: timestamp("last_scanned_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -152,6 +169,7 @@ export const earnings = pgTable("earnings", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   networkId: uuid("network_id").references(() => affiliateNetworks.id),
+  urlId: uuid("url_id").references(() => urls.id, { onDelete: "set null" }),
   networkName: text("network_name").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   currency: text("currency").default("USD").notNull(),
@@ -161,7 +179,133 @@ export const earnings = pgTable("earnings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const userPreferences = pgTable("user_preferences", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
+  onboardingState: jsonb("onboarding_state").$type<{
+    currentStep: number;
+    completedSteps: string[];
+    urlAdded?: string;
+  }>(),
+  weeklyReportEnabled: boolean("weekly_report_enabled").default(true).notNull(),
+  weeklyReportDay: integer("weekly_report_day").default(1).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const linkStatusHistory = pgTable("link_status_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  urlId: uuid("url_id")
+    .notNull()
+    .references(() => urls.id, { onDelete: "cascade" }),
+  linkOriginalUrl: text("link_original_url").notNull(),
+  networkName: text("network_name"),
+  status: linkStatusEnum("status").notNull(),
+  httpStatusCode: integer("http_status_code"),
+  checkedAt: timestamp("checked_at").notNull().defaultNow(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: notificationTypeEnum("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  actionUrl: text("action_url"),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const activityLog = pgTable("activity_log", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  action: text("action").notNull(),
+  entityType: text("entity_type"),
+  entityId: text("entity_id"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const opportunities = pgTable("opportunities", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  urlId: uuid("url_id")
+    .notNull()
+    .references(() => urls.id, { onDelete: "cascade" }),
+  linkOriginalUrl: text("link_original_url").notNull(),
+  anchorText: text("anchor_text"),
+  suggestedNetwork: text("suggested_network").notNull(),
+  reason: text("reason").notNull(),
+  isDismissed: boolean("is_dismissed").default(false).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const contentSnapshots = pgTable("content_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  urlId: uuid("url_id")
+    .notNull()
+    .references(() => urls.id, { onDelete: "cascade" }),
+  linkOriginalUrl: text("link_original_url").notNull(),
+  contextHash: text("context_hash").notNull(),
+  contextSnippet: text("context_snippet").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const contentDrifts = pgTable("content_drifts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  urlId: uuid("url_id")
+    .notNull()
+    .references(() => urls.id, { onDelete: "cascade" }),
+  linkOriginalUrl: text("link_original_url").notNull(),
+  previousSnippet: text("previous_snippet").notNull(),
+  currentSnippet: text("current_snippet").notNull(),
+  previousHash: text("previous_hash").notNull(),
+  currentHash: text("current_hash").notNull(),
+  isReviewed: boolean("is_reviewed").default(false).notNull(),
+  detectedAt: timestamp("detected_at").notNull().defaultNow(),
+});
+
+export const apiKeys = pgTable("api_keys", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  keyPrefix: text("key_prefix").notNull(),
+  keyHash: text("key_hash").notNull().unique(),
+  lastUsedAt: timestamp("last_used_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Type exports
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type ContentSnapshot = typeof contentSnapshots.$inferSelect;
+export type ContentDrift = typeof contentDrifts.$inferSelect;
+export type Opportunity = typeof opportunities.$inferSelect;
+export type ActivityLogEntry = typeof activityLog.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type LinkStatusHistoryRecord = typeof linkStatusHistory.$inferSelect;
+export type UserPreference = typeof userPreferences.$inferSelect;
 export type User = typeof user.$inferSelect;
 export type Url = typeof urls.$inferSelect;
 export type InsertUrl = typeof urls.$inferInsert;

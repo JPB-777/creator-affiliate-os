@@ -8,6 +8,69 @@
       "when": 1773023508795,
       "tag": "0000_stormy_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773492437560,
+      "tag": "0001_giant_phil_sheldon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773493072180,
+      "tag": "0002_serious_blink",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773493194067,
+      "tag": "0003_slim_invisible_woman",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773493617703,
+      "tag": "0004_parallel_lily_hollister",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773494125756,
+      "tag": "0005_illegal_mattie_franklin",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773494292268,
+      "tag": "0006_new_surge",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773494492030,
+      "tag": "0007_stale_lester",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773494671952,
+      "tag": "0008_bored_lightspeed",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773494926844,
+      "tag": "0009_outstanding_gabe_jones",
+      "breakpoints": true
     }
   ]
 }

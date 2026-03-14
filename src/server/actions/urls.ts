@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { requireUser } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 import { triggerScan } from "./scans";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function addUrl(formData: FormData) {
   const user = await requireUser();
@@ -32,6 +33,7 @@ export async function addUrl(formData: FormData) {
   // Auto-trigger scan
   await triggerScan(newUrl.id, user.id);
 
+  await logActivity({ userId: user.id, action: "url_added", entityType: "url", entityId: newUrl.id, metadata: { description: normalizedUrl } });
   revalidatePath("/urls");
   revalidatePath("/dashboard");
   return newUrl;
@@ -42,6 +44,7 @@ export async function deleteUrl(id: string) {
   await db
     .delete(urls)
     .where(and(eq(urls.id, id), eq(urls.userId, user.id)));
+  await logActivity({ userId: user.id, action: "url_deleted", entityType: "url", entityId: id });
   revalidatePath("/urls");
   revalidatePath("/dashboard");
 }
@@ -113,9 +116,22 @@ export async function updateUrlTags(urlId: string, tags: string[]) {
   revalidatePath("/urls");
 }
 
+export async function updateScanFrequency(
+  urlId: string,
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "manual"
+) {
+  const user = await requireUser();
+  await db
+    .update(urls)
+    .set({ scanFrequency: frequency, updatedAt: new Date() })
+    .where(and(eq(urls.id, urlId), eq(urls.userId, user.id)));
+  revalidatePath("/urls");
+}
+
 export async function rescanUrl(id: string) {
   const user = await requireUser();
   await triggerScan(id, user.id);
+  await logActivity({ userId: user.id, action: "url_rescanned", entityType: "url", entityId: id });
   revalidatePath(`/urls/${id}`);
   revalidatePath("/urls");
   revalidatePath("/dashboard");

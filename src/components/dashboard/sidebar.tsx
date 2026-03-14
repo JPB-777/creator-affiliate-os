@@ -22,14 +22,25 @@ import {
   Settings,
   LogOut,
   User,
+  AlertTriangle,
+  Tag,
+  Activity,
+  Sparkles,
+  GitCompareArrows,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
+import { NotificationBell } from "@/components/dashboard/notification-bell";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/urls", label: "URLs", icon: Globe },
   { href: "/links", label: "Affiliate Links", icon: Link2 },
+  { href: "/broken-links", label: "Broken Links", icon: AlertTriangle },
+  { href: "/opportunities", label: "Opportunities", icon: Sparkles },
   { href: "/earnings", label: "Earnings", icon: DollarSign },
+  { href: "/tags", label: "Tags", icon: Tag },
+  { href: "/content-drift", label: "Content Drift", icon: GitCompareArrows },
+  { href: "/activity", label: "Activity", icon: Activity },
   { href: "/disclosures", label: "Disclosures", icon: FileText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -147,7 +158,7 @@ export function Sidebar({
             </div>
           </SheetContent>
         </Sheet>
-        <div className="ml-3 flex items-center gap-2.5">
+        <div className="ml-3 flex flex-1 items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
             <Link2 className="h-4 w-4 text-primary-foreground" />
           </div>
@@ -155,6 +166,7 @@ export function Sidebar({
             AffiliateOS
           </Link>
         </div>
+        <NotificationBell />
       </div>
 
       {/* Desktop sidebar */}
@@ -163,9 +175,10 @@ export function Sidebar({
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
             <Link2 className="h-4 w-4 text-primary-foreground" />
           </div>
-          <Link href="/dashboard" className="text-lg font-bold">
+          <Link href="/dashboard" className="flex-1 text-lg font-bold">
             AffiliateOS
           </Link>
+          <NotificationBell />
         </div>
         <NavContent userName={userName} userEmail={userEmail} />
       </aside>

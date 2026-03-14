@@ -1,14 +1,17 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { scans, links, urls } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { scans, links, urls, linkStatusHistory, opportunities, contentSnapshots, contentDrifts } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { fetchPage } from "@/lib/scanner/fetcher";
 import { extractLinks, extractTitle } from "@/lib/scanner/parser";
 import { detectAffiliateLinks } from "@/lib/scanner/detector";
+import { detectOpportunities } from "@/lib/scanner/opportunity-detector";
+import { extractLinkContexts } from "@/lib/scanner/content-snapshot";
 import { checkLinks } from "@/lib/scanner/checker";
 import { sendBrokenLinksAlert } from "@/lib/email";
 import { user as userTable } from "@/lib/db/schema";
+import { createNotification } from "@/server/actions/notifications";
 
 export async function triggerScan(urlId: string, userId: string) {
   // Create scan record
@@ -95,6 +98,91 @@ export async function triggerScan(urlId: string, userId: string) {
       }
     }
 
+    // Record link status history
+    if (checkResults.length > 0) {
+      await db.insert(linkStatusHistory).values(
+        checkResults.map((r) => {
+          const link = detected.find((l) => l.href === r.url);
+          return {
+            userId,
+            urlId,
+            linkOriginalUrl: r.url,
+            networkName: link?.networkName || null,
+            status: r.status as "healthy" | "broken" | "redirect" | "timeout" | "unchecked",
+            httpStatusCode: r.httpStatusCode,
+            checkedAt: new Date(),
+          };
+        })
+      );
+    }
+
+    // Detect monetization opportunities on non-affiliate links
+    try {
+      const oppMatches = detectOpportunities(detected);
+      if (oppMatches.length > 0) {
+        // Delete old opportunities for this URL then insert new ones
+        await db.delete(opportunities).where(and(eq(opportunities.urlId, urlId), eq(opportunities.userId, userId)));
+        await db.insert(opportunities).values(
+          oppMatches.map((m) => ({
+            userId,
+            urlId,
+            linkOriginalUrl: m.linkUrl,
+            anchorText: m.anchorText,
+            suggestedNetwork: m.suggestedNetwork,
+            reason: m.reason,
+          }))
+        );
+      }
+    } catch {
+      // Best-effort
+    }
+
+    // Content drift detection
+    try {
+      const affiliateHrefs = detected.filter((l) => l.isAffiliate).map((l) => l.href);
+      const contexts = extractLinkContexts(html, affiliateHrefs);
+
+      if (contexts.length > 0) {
+        // Get existing snapshots for this URL
+        const existingSnapshots = await db
+          .select()
+          .from(contentSnapshots)
+          .where(and(eq(contentSnapshots.urlId, urlId), eq(contentSnapshots.userId, userId)));
+
+        const snapshotMap = new Map(existingSnapshots.map((s) => [s.linkOriginalUrl, s]));
+
+        // Check for changes and create drift records
+        for (const ctx of contexts) {
+          const existing = snapshotMap.get(ctx.linkUrl);
+          if (existing && existing.contextHash !== ctx.contextHash) {
+            await db.insert(contentDrifts).values({
+              userId,
+              urlId,
+              linkOriginalUrl: ctx.linkUrl,
+              previousSnippet: existing.contextSnippet,
+              currentSnippet: ctx.contextSnippet,
+              previousHash: existing.contextHash,
+              currentHash: ctx.contextHash,
+            });
+          }
+        }
+
+        // Upsert snapshots (delete + reinsert for this URL)
+        await db.delete(contentSnapshots).where(and(eq(contentSnapshots.urlId, urlId), eq(contentSnapshots.userId, userId)));
+        await db.insert(contentSnapshots).values(
+          contexts.map((ctx) => ({
+            userId,
+            urlId,
+            linkOriginalUrl: ctx.linkUrl,
+            contextHash: ctx.contextHash,
+            contextSnippet: ctx.contextSnippet,
+          }))
+        );
+      }
+    } catch {
+      // Best-effort
+    }
+
     const affiliateCount = detected.filter((l) => l.isAffiliate).length;
 
     // Update scan
@@ -120,7 +208,7 @@ export async function triggerScan(urlId: string, userId: string) {
       })
       .where(eq(urls.id, urlId));
 
-    // Send broken links email alert
+    // Send broken links email alert + notification
     if (brokenCount > 0) {
       try {
         const [userData] = await db
@@ -150,6 +238,22 @@ export async function triggerScan(urlId: string, userId: string) {
       } catch {
         // Email alert is best-effort, don't fail the scan
       }
+
+      await createNotification({
+        userId,
+        type: "broken_link",
+        title: `${brokenCount} broken link${brokenCount > 1 ? "s" : ""} found`,
+        message: `Scan of "${title || urlRecord.url}" found ${brokenCount} broken affiliate link${brokenCount > 1 ? "s" : ""}.`,
+        actionUrl: `/urls/${urlId}`,
+      });
+    } else {
+      await createNotification({
+        userId,
+        type: "scan_complete",
+        title: "Scan completed",
+        message: `"${title || urlRecord.url}" scanned — ${affiliateCount} affiliate link${affiliateCount !== 1 ? "s" : ""} found, all healthy.`,
+        actionUrl: `/urls/${urlId}`,
+      });
     }
   } catch (error) {
     await db
