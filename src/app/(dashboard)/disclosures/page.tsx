@@ -5,6 +5,8 @@ import { generateDisclosure, CONTENT_TYPES, type ContentType } from "@/lib/discl
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedLayout } from "@/components/shared/animated-layout";
+import { PageHeader } from "@/components/shared/page-header";
 
 const NETWORKS = [
   "Amazon Associates",
@@ -44,13 +46,12 @@ export default function DisclosuresPage() {
   }
 
   return (
+    <AnimatedLayout>
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Disclosure Generator</h1>
-        <p className="text-muted-foreground">
-          Generate FTC-compliant disclosure text for your content
-        </p>
-      </div>
+      <PageHeader
+        title="Disclosure Generator"
+        description="Generate FTC-compliant disclosure text for your content"
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-6">
@@ -116,5 +117,6 @@ export default function DisclosuresPage() {
         </Card>
       </div>
     </div>
+    </AnimatedLayout>
   );
 }

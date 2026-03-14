@@ -6,23 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function UpdateProfileForm({ currentName }: { currentName: string }) {
   const [name, setName] = useState(currentName);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
     try {
       await authClient.updateUser({ name });
-      setMessage("Profile updated!");
+      toast.success("Profile updated");
       router.refresh();
     } catch {
-      setMessage("Failed to update profile.");
+      toast.error("Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -39,11 +38,6 @@ export function UpdateProfileForm({ currentName }: { currentName: string }) {
           placeholder="Your name"
         />
       </div>
-      {message && (
-        <p className={`text-sm ${message.includes("Failed") ? "text-destructive" : "text-green-600"}`}>
-          {message}
-        </p>
-      )}
       <Button type="submit" disabled={loading || name === currentName}>
         {loading ? "Saving..." : "Save"}
       </Button>

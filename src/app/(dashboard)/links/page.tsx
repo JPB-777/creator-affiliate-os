@@ -15,6 +15,9 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { LinkFilters } from "@/components/links/link-filters";
 import { ExportLinksButton } from "@/components/links/export-button";
 import { ReplaceLinkForm } from "@/components/links/replace-link-form";
+import { Link2, CheckCircle, AlertTriangle } from "lucide-react";
+import { AnimatedLayout } from "@/components/shared/animated-layout";
+import { PageHeader } from "@/components/shared/page-header";
 
 function statusColor(status: string) {
   switch (status) {
@@ -46,42 +49,42 @@ export default async function LinksPage({
   const brokenLinks = affiliateLinks.filter((l) => l.status === "broken");
 
   return (
+    <AnimatedLayout>
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Affiliate Links</h1>
-          <ExportLinksButton />
-        </div>
-        <p className="text-muted-foreground">
-          All affiliate links detected across your content
-        </p>
-      </div>
+      <PageHeader
+        title="Affiliate Links"
+        description="All affiliate links detected across your content"
+        action={<ExportLinksButton />}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Total</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+            <Link2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{total}</div>
+            <div className="text-2xl font-bold font-mono tabular-nums">{total}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Healthy</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Healthy</CardTitle>
+            <CheckCircle className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold font-mono tabular-nums text-success">
               {affiliateLinks.filter((l) => l.status === "healthy").length}
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Broken</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Broken</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
+            <div className="text-2xl font-bold font-mono tabular-nums text-destructive">
               {brokenLinks.length}
             </div>
           </CardContent>
@@ -145,8 +148,14 @@ export default async function LinksPage({
               ))}
               {affiliateLinks.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    No affiliate links detected yet. Add URLs to scan.
+                  <TableCell colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                        <Link2 className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="mt-4 text-sm font-medium">No affiliate links detected yet</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Add URLs to scan for affiliate links.</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -157,5 +166,6 @@ export default async function LinksPage({
 
       <PaginationControls currentPage={page} totalPages={totalPages} />
     </div>
+    </AnimatedLayout>
   );
 }

@@ -8,6 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Url } from "@/lib/db/schema";
 import { useState } from "react";
 import { TagEditor } from "@/components/urls/tag-editor";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { toast } from "sonner";
+import { Loader2, Trash2 } from "lucide-react";
 
 export function UrlCard({ url }: { url: Url }) {
   const [loading, setLoading] = useState(false);
@@ -16,13 +19,21 @@ export function UrlCard({ url }: { url: Url }) {
     setLoading(true);
     try {
       await rescanUrl(url.id);
+      toast.success("Scan complete");
+    } catch {
+      toast.error("Scan failed");
     } finally {
       setLoading(false);
     }
   }
 
+  async function handleDelete() {
+    await deleteUrl(url.id);
+    toast.success("URL deleted");
+  }
+
   return (
-    <Card>
+    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <CardContent className="flex items-center justify-between py-4">
         <div className="min-w-0 flex-1">
           <Link
@@ -58,13 +69,27 @@ export function UrlCard({ url }: { url: Url }) {
             onClick={handleRescan}
             disabled={loading}
           >
-            {loading ? "Scanning..." : "Rescan"}
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Scanning...
+              </>
+            ) : (
+              "Rescan"
+            )}
           </Button>
-          <form action={() => deleteUrl(url.id)}>
-            <Button variant="ghost" size="sm" type="submit">
-              Delete
-            </Button>
-          </form>
+          <ConfirmDialog
+            title="Delete URL"
+            description="This URL and all its scan data will be permanently deleted. This action cannot be undone."
+            confirmText="Delete"
+            variant="destructive"
+            onConfirm={handleDelete}
+            trigger={
+              <Button variant="ghost" size="sm">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            }
+          />
         </div>
       </CardContent>
     </Card>

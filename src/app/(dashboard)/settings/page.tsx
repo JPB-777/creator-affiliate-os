@@ -2,16 +2,16 @@ import { requireUser } from "@/lib/auth-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdateProfileForm } from "@/components/settings/update-profile-form";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
+import { AnimatedLayout } from "@/components/shared/animated-layout";
+import { PageHeader } from "@/components/shared/page-header";
 
 export default async function SettingsPage() {
   const user = await requireUser();
 
   return (
+    <AnimatedLayout>
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account</p>
-      </div>
+      <PageHeader title="Settings" description="Manage your account" />
 
       <Card>
         <CardHeader>
@@ -43,5 +43,6 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+    </AnimatedLayout>
   );
 }

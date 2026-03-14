@@ -14,6 +14,9 @@ import { DeleteEarningButton } from "@/components/earnings/delete-earning-button
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { EarningFilters } from "@/components/earnings/earning-filters";
 import { ExportEarningsButton } from "@/components/earnings/export-button";
+import { Calendar, DollarSign, Trophy } from "lucide-react";
+import { AnimatedLayout } from "@/components/shared/animated-layout";
+import { PageHeader } from "@/components/shared/page-header";
 
 export default async function EarningsPage({
   searchParams,
@@ -33,54 +36,54 @@ export default async function EarningsPage({
   ]);
 
   return (
+    <AnimatedLayout>
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Earnings Tracker</h1>
-          <ExportEarningsButton />
-        </div>
-        <p className="text-muted-foreground">
-          Track your affiliate earnings by network and period
-        </p>
-      </div>
+      <PageHeader
+        title="Earnings Tracker"
+        description="Track your affiliate earnings by network and period"
+        action={<ExportEarningsButton />}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               This Month
             </CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold font-mono tabular-nums">
               ${parseFloat(summary.thisMonth).toFixed(2)}
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               All Time
             </CardTitle>
+            <DollarSign className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold font-mono tabular-nums">
               ${parseFloat(summary.allTime).toFixed(2)}
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Top Network
             </CardTitle>
+            <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
               {summary.topNetwork?.network ?? "N/A"}
             </div>
             {summary.topNetwork && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-mono tabular-nums">
                 ${parseFloat(summary.topNetwork.total).toFixed(2)}
               </p>
             )}
@@ -127,11 +130,14 @@ export default async function EarningsPage({
               ))}
               {earningsList.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    No earnings recorded yet. Add your first entry above.
+                  <TableCell colSpan={5} className="py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                        <DollarSign className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <p className="mt-4 text-sm font-medium">No earnings recorded yet</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Add your first entry above to start tracking.</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -142,5 +148,6 @@ export default async function EarningsPage({
 
       <PaginationControls currentPage={page} totalPages={totalPages} />
     </div>
+    </AnimatedLayout>
   );
 }

@@ -6,6 +6,8 @@ import { addUrl, bulkAddUrls } from "@/server/actions/urls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -32,12 +34,16 @@ export function AddUrlForm() {
         const results = await bulkAddUrls(formData);
         setBulkResults(results);
         setProgress("");
+        const added = results.filter((r) => r.status === "added").length;
+        if (added > 0) toast.success(`${added} URL${added > 1 ? "s" : ""} imported`);
       } else {
         await addUrl(formData);
+        toast.success("URL added & scanned");
       }
       router.refresh();
     } catch (error) {
       console.error("Failed to add URL:", error);
+      toast.error("Failed to add URL");
     } finally {
       setLoading(false);
     }
@@ -101,9 +107,12 @@ export function AddUrlForm() {
             </SelectContent>
           </Select>
           <Button type="submit" disabled={loading}>
-            {loading
-              ? progress || "Scanning..."
-              : bulkMode
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {progress || "Scanning..."}
+              </>
+            ) : bulkMode
                 ? "Import & Scan All"
                 : "Add & Scan"}
           </Button>

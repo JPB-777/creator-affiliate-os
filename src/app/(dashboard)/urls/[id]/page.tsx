@@ -14,6 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { Link2, AlertTriangle, ExternalLink } from "lucide-react";
+import { AnimatedLayout } from "@/components/shared/animated-layout";
 
 function statusColor(status: string) {
   switch (status) {
@@ -49,46 +51,50 @@ export default async function UrlDetailPage({
   const otherLinks = urlLinks.filter((l) => !l.isAffiliate);
 
   return (
+    <AnimatedLayout>
     <div className="space-y-6">
       <div>
         <Link href="/urls" className="text-sm text-muted-foreground hover:underline">
           &larr; Back to URLs
         </Link>
-        <h1 className="mt-2 text-2xl font-bold">{url.title || url.url}</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">{url.title || url.url}</h1>
         <p className="truncate text-sm text-muted-foreground">{url.url}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Affiliate Links
             </CardTitle>
+            <Link2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{affiliateLinks.length}</div>
+            <div className="text-2xl font-bold font-mono tabular-nums">{affiliateLinks.length}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Broken
             </CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
+            <div className="text-2xl font-bold font-mono tabular-nums text-destructive">
               {affiliateLinks.filter((l) => l.status === "broken").length}
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Links
             </CardTitle>
+            <ExternalLink className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{urlLinks.length}</div>
+            <div className="text-2xl font-bold font-mono tabular-nums">{urlLinks.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -202,5 +208,6 @@ export default async function UrlDetailPage({
         </Card>
       )}
     </div>
+    </AnimatedLayout>
   );
 }

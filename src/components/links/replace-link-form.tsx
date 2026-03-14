@@ -5,6 +5,7 @@ import { suggestReplacement } from "@/server/actions/links";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 export function ReplaceLinkForm({
   linkId,
@@ -20,7 +21,10 @@ export function ReplaceLinkForm({
 
   function handleSave() {
     if (!url.trim()) return;
-    startTransition(() => suggestReplacement(linkId, url.trim()));
+    startTransition(async () => {
+      await suggestReplacement(linkId, url.trim());
+      toast.success("Replacement saved");
+    });
   }
 
   function handleCopy() {

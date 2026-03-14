@@ -4,6 +4,10 @@ import { AddUrlForm } from "@/components/urls/add-url-form";
 import { UrlCard } from "@/components/urls/url-card";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { UrlFilters } from "@/components/urls/url-filters";
+import { AnimatedLayout } from "@/components/shared/animated-layout";
+import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Globe } from "lucide-react";
 
 export default async function UrlsPage({
   searchParams,
@@ -20,32 +24,32 @@ export default async function UrlsPage({
   const { data: userUrls, totalPages } = await getUserUrls(user.id, page, 20, filters);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Tracked URLs</h1>
-        <p className="text-muted-foreground">
-          Add pages to scan for affiliate links
-        </p>
+    <AnimatedLayout>
+      <div className="space-y-6">
+        <PageHeader
+          title="Tracked URLs"
+          description="Add pages to scan for affiliate links"
+        />
+
+        <AddUrlForm />
+
+        <UrlFilters />
+
+        <div className="space-y-3">
+          {userUrls.map((url) => (
+            <UrlCard key={url.id} url={url} />
+          ))}
+          {userUrls.length === 0 && (
+            <EmptyState
+              icon={<Globe />}
+              title="No URLs added yet"
+              description="Add a URL above to start scanning for affiliate links."
+            />
+          )}
+        </div>
+
+        <PaginationControls currentPage={page} totalPages={totalPages} />
       </div>
-
-      <AddUrlForm />
-
-      <UrlFilters />
-
-      <div className="space-y-3">
-        {userUrls.map((url) => (
-          <UrlCard key={url.id} url={url} />
-        ))}
-        {userUrls.length === 0 && (
-          <div className="rounded-md border border-dashed p-8 text-center">
-            <p className="text-muted-foreground">
-              No URLs added yet. Add a URL above to start scanning.
-            </p>
-          </div>
-        )}
-      </div>
-
-      <PaginationControls currentPage={page} totalPages={totalPages} />
-    </div>
+    </AnimatedLayout>
   );
 }

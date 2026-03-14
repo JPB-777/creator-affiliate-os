@@ -1,7 +1,7 @@
 # AffiliateOS
 
 > Auto-maintained. Mis à jour après chaque tâche ou groupe de tâches.
-> Dernière mise à jour : 2026-03-14 (core operating mode + MVP philosophy)
+> Dernière mise à jour : 2026-03-14 (UI/UX modernisation complète)
 
 ## Core Operating Mode
 
@@ -25,11 +25,19 @@ MVP target:
 - No fake features
 - No filler
 
+## Vérification post-implémentation
+
+After each meaningful implementation step, you MUST include a "Vérification post-implémentation" section that covers:
+1. **Tests à ajouter/mettre à jour** : Est-ce que des tests doivent être ajoutés ou modifiés ? Lesquels ?
+2. **Type de tests recommandés** : Unit, integration, e2e, snapshot, ou autre ?
+3. **Exécution immédiate** : Les tests doivent-ils être exécutés maintenant avant de continuer ?
+4. **Validation minimum requise** : Quelle validation minimum (build, lint, manual check, smoke test) est requise avant de passer à l'étape suivante ?
+
 ## Description
 
 AffiliateOS est une plateforme open-source de gestion de liens affiliés pour créateurs de contenu. Elle scanne des pages web pour détecter les liens affiliés de 10+ réseaux, vérifie leur santé (broken/healthy/redirect/timeout), suit les revenus par réseau et période, et génère des textes de divulgation FTC pour 5 types de contenu.
 
-Stack : Next.js 16 (App Router, React 19), TypeScript strict, Tailwind CSS v4 + shadcn/ui, Drizzle ORM + Neon PostgreSQL, Better Auth (email/password + OAuth GitHub/Google), next-themes (dark mode). Déployé sur Vercel avec Neon DB.
+Stack : Next.js 16 (App Router, React 19), TypeScript strict, Tailwind CSS v4 + shadcn/ui, Drizzle ORM + Neon PostgreSQL, Better Auth (email/password + OAuth GitHub/Google), next-themes (dark mode), sonner (toasts), framer-motion (page transitions). Déployé sur Vercel avec Neon DB.
 
 ## Commandes
 
@@ -83,7 +91,7 @@ creator-affiliate-os/
 │   │   ├── settings/                 # UpdateProfileForm, ChangePasswordForm
 │   │   ├── urls/                     # AddUrlForm, UrlCard, UrlFilters, TagEditor
 │   │   ├── ui/                       # Primitives shadcn/ui (19 composants)
-│   │   └── shared/                   # Vide
+│   │   └── shared/                   # Composants réutilisables (AnimatedLayout, StatCard, PageHeader, EmptyState, ConfirmDialog)
 │   ├── lib/
 │   │   ├── auth.ts                   # Config Better Auth serveur
 │   │   ├── auth-client.ts            # Auth côté client (signIn, signUp, signOut)
@@ -191,8 +199,8 @@ creator-affiliate-os/
 - [x] Top Performing Content (dashboard, JOIN earnings ↔ links ↔ urls)
 - [x] Remplacement liens broken (input inline + clipboard copy)
 - [ ] UI edit earnings (action existe, pas de UI)
-- [ ] Error boundaries (`error.tsx`)
-- [ ] Loading states (`loading.tsx`)
+- [x] Error boundaries (`error.tsx`) — dashboard error boundary + root not-found
+- [x] Loading states (`loading.tsx`) — 5 skeleton loading pages (dashboard, urls, links, earnings, settings)
 
 ### Hors-scope actuel
 - Tests automatisés
@@ -307,3 +315,4 @@ creator-affiliate-os/
 | 2026-03-11 | Feat: 9 features polish — Dark mode toggle (next-themes), Settings edit profil + password, Pagination server-side (3 pages), Search/filtres (links, URLs, earnings), Tags JSONB sur URLs, Top Performing Content (dashboard), Export CSV (links + earnings), OAuth GitHub/Google, Remplacement liens broken. Migration `0001_add_tags_and_replacement`. Dep ajoutée : next-themes. |
 | 2026-03-11 | Marketing: Refonte landing page (hero, features, how-it-works, pricing preview, FAQ, CTA). SEO meta tags + OG tags dans layout.tsx. README pro (badges, screenshots, quick start). Page /pricing (3 tiers). Blog engine + article SEO `/blog/how-to-find-broken-affiliate-links`. |
 | 2026-03-11 | Fix cohérence: Pricing aligné sur le code réel — Cloud Free = Unlimited URLs (pas de fausse limite 25), Pro = "Coming soon" avec features futures honnêtes, pas de "Hourly auto-scans" inexistant. CLAUDE.md mis à jour (nouvelles routes, hors-scope corrigé). |
+| 2026-03-14 | UI/UX: Modernisation complète "Midnight Indigo" en 4 phases. **Phase 1** — Primary indigo (OKLCh), tokens success/warning, dark mode teinté, emojis sidebar → lucide-react, logo, active:scale boutons, font-mono métriques, `<select>` → shadcn Select. **Phase 2** — sonner toasts sur 8+ composants, ConfirmDialog pour suppressions, Loader2 spinners, messages inline → toasts. **Phase 3** — 5 loading.tsx skeletons, error.tsx, not-found.tsx. **Phase 4** — Auth branding (gradient, logo, icônes OAuth), AnimatedLayout (framer-motion) sur toutes les pages, PageHeader/StatCard/EmptyState composants partagés, chart custom tooltip OKLCh, empty states icon-in-circle. Deps ajoutées : sonner, framer-motion. Build vérifié ✓. |
