@@ -1,28 +1,38 @@
-// Simple in-memory rate limiter
+// Upstash Redis rate limiter for API v1
 // 100 requests per hour per API key hash
 
-const store = new Map<string, { count: number; resetAt: number }>();
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const MAX_REQUESTS = 100;
 
-export function checkRateLimit(identifier: string): {
+function createApiLimiter(): Ratelimit | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  return new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(MAX_REQUESTS, "1h"),
+    prefix: "rl:api:v1",
+  });
+}
+
+const limiter = createApiLimiter();
+
+export async function checkRateLimit(identifier: string): Promise<{
   allowed: boolean;
   remaining: number;
   resetAt: number;
-} {
-  const now = Date.now();
-  const entry = store.get(identifier);
-
-  if (!entry || now > entry.resetAt) {
-    store.set(identifier, { count: 1, resetAt: now + WINDOW_MS });
-    return { allowed: true, remaining: MAX_REQUESTS - 1, resetAt: now + WINDOW_MS };
+}> {
+  if (!limiter) {
+    // Graceful fallback: allow request when Upstash is not configured
+    return { allowed: true, remaining: MAX_REQUESTS, resetAt: Date.now() + 3600000 };
   }
 
-  if (entry.count >= MAX_REQUESTS) {
-    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
-  }
-
-  entry.count++;
-  return { allowed: true, remaining: MAX_REQUESTS - entry.count, resetAt: entry.resetAt };
+  const result = await limiter.limit(identifier);
+  return {
+    allowed: result.success,
+    remaining: result.remaining,
+    resetAt: result.reset,
+  };
 }

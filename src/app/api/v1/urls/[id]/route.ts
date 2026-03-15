@@ -14,7 +14,7 @@ export async function GET(
   const auth = await authenticateApiKey(request);
   if (!auth) return apiError("Unauthorized", 401);
 
-  const { allowed, remaining } = checkRateLimit(auth.userId);
+  const { allowed, remaining } = await checkRateLimit(auth.userId);
   if (!allowed) return apiError("Rate limit exceeded", 429);
 
   const { id } = await params;

@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "description": "Open-source affiliate link management platform for content creators",
   "license": "BUSL-1.1",
-  "author": "[Your Name]",
+  "author": "JPB-777",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/affiliateos.git"
+    "url": "https://github.com/JPB-777/creator-affiliate-os.git"
   },
-  "homepage": "https://github.com/YOUR_USERNAME/affiliateos",
+  "homepage": "https://github.com/JPB-777/creator-affiliate-os",
   "keywords": [
     "affiliate",
     "marketing",
@@ -27,11 +27,15 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "dotenv -e .env.local -- tsx src/lib/db/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
     "@neondatabase/serverless": "^1.0.2",
+    "@sentry/nextjs": "^10.43.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "better-auth": "^1.5.4",
@@ -54,16 +58,23 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.1",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.9",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^27.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

@@ -256,7 +256,9 @@ export const activityLog = pgTable("activity_log", {
   entityId: text("entity_id"),
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("activity_user_created_idx").on(table.userId, table.createdAt),
+]);
 
 export const opportunities = pgTable("opportunities", {
   id: uuid("id").defaultRandom().primaryKey(),

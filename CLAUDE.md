@@ -1,7 +1,7 @@
 # AffiliateOS
 
 > Auto-maintained. Mis à jour après chaque tâche ou groupe de tâches.
-> Dernière mise à jour : 2026-03-14 (15 features en 4 phases)
+> Dernière mise à jour : 2026-03-15 (Retrofit: sécurisation + monitoring + tests)
 
 ## Core Operating Mode
 
@@ -51,7 +51,10 @@ Stack : Next.js 16 (App Router, React 19), TypeScript strict, Tailwind CSS v4 + 
 | DB Migrate | `npm run db:migrate` |
 | DB Seed | `npm run db:seed` |
 | DB Studio | `npm run db:studio` |
-| Test | ❌ Aucun — pas de test runner configuré |
+| Test Unit | `npm test` (Vitest) |
+| Test Watch | `npm run test:watch` |
+| Test Coverage | `npm run test:coverage` |
+| Test E2E | `npx playwright test` |
 | Deploy | Auto-deploy via Vercel Git Integration (push sur `main`) |
 
 ## Architecture
@@ -80,6 +83,7 @@ creator-affiliate-os/
 │   │   │   ├── settings/page.tsx     # Profil, password, notifications, API keys
 │   │   │   └── layout.tsx            # Sidebar + contenu principal
 │   │   ├── api/auth/[...all]/        # Better Auth catch-all API
+│   │   ├── api/health/               # Health check endpoint (DB connectivity)
 │   │   ├── api/v1/                   # API publique REST (urls, links, earnings, health-score)
 │   │   ├── api/export/links/         # Export CSV liens affiliés
 │   │   ├── api/export/earnings/      # Export CSV earnings
@@ -163,14 +167,26 @@ creator-affiliate-os/
 │   │       ├── tags.ts               # getAllUserTags (via jsonb_array_elements_text)
 │   │       ├── api-keys.ts           # getApiKeys, validateApiKey
 │   │       └── weekly-report.ts      # getWeeklyReportData, getUsersForWeeklyReport
+│   ├── instrumentation.ts            # Sentry instrumentation hook (Node + Edge)
 │   ├── middleware.ts                 # Protection routes via cookie session
+│   ├── __tests__/                    # Tests unitaires Vitest
+│   │   ├── setup.ts                 # Setup jest-dom matchers
+│   │   ├── scanner/                 # Tests scanner (detector, parser, url-validator)
+│   │   └── disclosures.test.ts      # Tests disclosures FTC
 │   └── types/                        # Vide
-├── migrations/                       # Fichiers migration Drizzle
+├── e2e/                              # Tests E2E Playwright
+│   └── public-pages.spec.ts         # Tests pages publiques + auth redirect
+├── migrations/                       # Fichiers migration Drizzle (13 migrations)
 ├── docs/                             # self-hosting.md + screenshots (vide)
 ├── public/                           # Assets statiques
 ├── .vercel/                          # Config Vercel project
+├── sentry.client.config.ts           # Sentry client init
+├── sentry.server.config.ts           # Sentry server init
+├── sentry.edge.config.ts             # Sentry edge init
+├── vitest.config.ts                  # Config Vitest (jsdom, @/ alias)
+├── playwright.config.ts              # Config Playwright (chromium)
 ├── drizzle.config.ts                 # Config Drizzle Kit
-├── next.config.ts                    # output: standalone
+├── next.config.ts                    # output: standalone + withSentryConfig
 ├── components.json                   # Config shadcn/ui
 ├── Dockerfile                        # Build multi-stage Docker
 ├── docker-compose.yml                # App + PostgreSQL containers
@@ -215,7 +231,7 @@ creator-affiliate-os/
 ### Definition of Done
 - [x] Public URL avec HTTPS (Vercel)
 - [x] Production DB connectée (Neon)
-- [ ] Secrets injectés sécuritairement en production ⚠️ `BETTER_AUTH_SECRET` placeholder en local
+- [x] Secrets injectés sécuritairement en production ✅ Validés et corrigés 2026-03-15
 - [x] Déployé via Vercel Git Integration (auto-deploy sur push main)
 - [ ] 1 vrai utilisateur a complété 1 vraie action
 
@@ -267,7 +283,6 @@ creator-affiliate-os/
 - [x] F15: Content drift detection (SHA-256 context hashing, word-level diff)
 
 ### Hors-scope actuel
-- Tests automatisés
 - Background jobs / queues
 - Team/org features
 - Billing / tiers / plans (pas de logique de plan dans le code — pricing page marketing existe mais aucun enforcement)
@@ -300,6 +315,12 @@ creator-affiliate-os/
 | `GITHUB_CLIENT_SECRET` | Non | OAuth GitHub app client secret | server |
 | `GOOGLE_CLIENT_ID` | Non | OAuth Google app client ID | server |
 | `GOOGLE_CLIENT_SECRET` | Non | OAuth Google app client secret | server |
+| `UPSTASH_REDIS_REST_URL` | Non | URL REST Upstash Redis (rate limiting) | server |
+| `UPSTASH_REDIS_REST_TOKEN` | Non | Token REST Upstash Redis | server |
+| `NEXT_PUBLIC_SENTRY_DSN` | Non | DSN Sentry error tracking | client |
+| `SENTRY_ORG` | Non | Organisation Sentry (source maps) | server |
+| `SENTRY_PROJECT` | Non | Projet Sentry | server |
+| `SENTRY_AUTH_TOKEN` | Non | Token auth Sentry (source maps) | server |
 
 ### Règles métier
 - Chaque scan remplace tous les liens précédents pour cette URL (pas incrémental)
@@ -314,15 +335,19 @@ creator-affiliate-os/
 - License BSL 1.1 → ne peut pas être utilisé pour offrir un service hébergé concurrent avant 2029-03-08
 
 ### Intégrations
-- **Neon** : PostgreSQL serverless
+- **Neon** : PostgreSQL serverless (RLS activé sur 12 tables)
+- **Sentry** : Error tracking + performance monitoring (en attente DSN)
+- **Upstash Redis** : Rate limiting API v1 + middleware (en attente config)
 - **Resend** : Alertes email (optionnel, 3k/mois gratuit)
 - **GitHub/Google OAuth** : Login social (optionnel, credentials requis)
 
 ### Hypothèses actives
-- [HYPOTHÈSE] Les secrets Vercel sont configurés correctement pour `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`
-- [HYPOTHÈSE] `BETTER_AUTH_SECRET` en production est un vrai secret (pas le placeholder local)
-- [HYPOTHÈSE] La DB Neon de production a les migrations appliquées et les networks seedés
-- [À VALIDER] Les URLs de production pour `BETTER_AUTH_URL` et `NEXT_PUBLIC_APP_URL` pointent vers le bon domaine Vercel
+- [VALIDÉ ✅] Les secrets Vercel sont configurés correctement — validé et corrigé 2026-03-15 (trailing \n fix)
+- [VALIDÉ ✅] `BETTER_AUTH_SECRET` en production est un vrai secret aléatoire
+- [VALIDÉ ✅] La DB Neon de production a toutes les 13 migrations appliquées + networks seedés
+- [VALIDÉ ✅] Les URLs de production pointent vers le bon domaine Vercel HTTPS
+- [EN ATTENTE] Sentry DSN pas encore configuré dans Vercel (projet Sentry à créer)
+- [EN ATTENTE] Upstash Redis pas encore configuré dans Vercel (fallback in-memory actif)
 
 ### Décisions prises
 - Vercel pour hosting (auto-deploy via Git Integration, pas GitHub Actions)
@@ -336,7 +361,7 @@ creator-affiliate-os/
 - Constante `NETWORKS` dupliquée dans `add-earning-form.tsx` et `disclosures/page.tsx`
 - `seed.ts` duplique la logique de connexion DB au lieu d'importer `db/index.ts`
 - `url.totalLinks` stocke le compte affiliés seulement (nom trompeur)
-- Pas de sanitization d'input sur les URLs (risque SSRF)
+- SSRF protection ajoutée dans `url-validator.ts` mais non intégrée dans le scanner pipeline
 - `earnings.amount` est `decimal` en DB mais géré comme string dans les queries
 
 ## Déploiement
@@ -346,7 +371,7 @@ creator-affiliate-os/
 - **Repo GitHub** : `JPB-777/creator-affiliate-os`
 - **Méthode deploy** : Vercel Git Integration (auto-deploy sur push `main`)
 - **Méthode secrets** : Vercel Environment Variables
-- **GitHub Actions** : ❌ Pas configuré (deploy géré par Vercel directement)
+- **GitHub Actions** : ✅ CI pipeline (lint + typecheck + build + unit tests + E2E)
 - **Trigger** : Push sur branche `main`
 - **Secrets requis en production** :
   - `DATABASE_URL` — Connection string Neon production
@@ -361,9 +386,9 @@ creator-affiliate-os/
 | 1 | Cadrage | ✅ Complété |
 | 2 | MVP Build | ✅ Toutes les features MUST fonctionnent |
 | 3 | Scope Freeze | ✅ Feature list lockée (voir MVP Checklist) |
-| 4 | Pre-launch | ⚠️ Vercel déployé, secrets à valider |
-| 5 | Security | ❌ Checklist pas passée |
-| 6 | Deployment | ⚠️ Live sur Vercel, validation en cours |
+| 4 | Pre-launch | ✅ Vercel déployé, secrets validés et corrigés |
+| 5 | Security | ⚠️ RLS activé, Sentry intégré (en attente DSN), tests en place |
+| 6 | Deployment | ⚠️ Live sur Vercel, en attente redeploy post-retrofit |
 | 7 | Post-launch | ❌ Aucun vrai utilisateur confirmé |
 
 ## Changelog
@@ -379,3 +404,4 @@ creator-affiliate-os/
 | 2026-03-11 | Fix cohérence: Pricing aligné sur le code réel — Cloud Free = Unlimited URLs (pas de fausse limite 25), Pro = "Coming soon" avec features futures honnêtes, pas de "Hourly auto-scans" inexistant. CLAUDE.md mis à jour (nouvelles routes, hors-scope corrigé). |
 | 2026-03-14 | UI/UX: Modernisation complète "Midnight Indigo" en 4 phases. **Phase 1** — Primary indigo (OKLCh), tokens success/warning, dark mode teinté, emojis sidebar → lucide-react, logo, active:scale boutons, font-mono métriques, `<select>` → shadcn Select. **Phase 2** — sonner toasts sur 8+ composants, ConfirmDialog pour suppressions, Loader2 spinners, messages inline → toasts. **Phase 3** — 5 loading.tsx skeletons, error.tsx, not-found.tsx. **Phase 4** — Auth branding (gradient, logo, icônes OAuth), AnimatedLayout (framer-motion) sur toutes les pages, PageHeader/StatCard/EmptyState composants partagés, chart custom tooltip OKLCh, empty states icon-in-circle. Deps ajoutées : sonner, framer-motion. Build vérifié ✓. |
 | 2026-03-14 | Feat: 15 features en 4 phases. **Phase 1 (Activation)** — F2 revenus liés URLs, F3 broken links dashboard (batch actions), F1 onboarding wizard 5 étapes. **Phase 2 (Scale)** — F5 historique santé liens (Recharts timeline), F6 score santé global (SVG gauge, grades A-F), F4 import sitemap XML (Cheerio, max 200), F7 rapport hebdomadaire email (Resend cron). **Phase 3 (Profondeur)** — F8 scan programmé configurable (5 fréquences), F9 tags avancés (rename/merge/delete, tag cloud), F10 comparaison période vs période (SQL conditional aggregates), F11 notifications in-app (bell + sheet, 60s polling). **Phase 4 (Différenciation)** — F14 log d'activité (timeline groupée, best-effort), F12 opportunités manquées (25 domaines monétisables), F15 content drift (SHA-256 context hashing, word-level diff), F13 API publique REST (Bearer SHA-256, rate limit 100/hr, 5 endpoints + settings UI). Schema: 9→17 tables, 2→4 enums. 9 migrations. Toutes les features build-verified ✓. |
+| 2026-03-15 | **Retrofit production-ready** — 16 actions en 4 blocs. **Bloc A (Fix)**: Secrets Vercel corrigés (trailing \n fix sur 4 vars), 2 crons manquants ajoutés (weekly-report, cleanup-history), index activityLog(userId, createdAt), 8 migrations manquantes appliquées manuellement sur Neon. **Bloc B (Secure)**: Sentry intégré (@sentry/nextjs, client+server+edge configs, global-error.tsx, instrumentation.ts, withSentryConfig), endpoint /api/health (DB check), RLS activé sur 12 tables, rate limiting API v1 migré vers Upstash Redis. **Bloc C (Standard)**: package.json metadata (author, repo), Vitest setup (36 tests: scanner detector/parser, url-validator SSRF, disclosures FTC), Playwright E2E (public pages, auth redirects, API), CI GitHub Actions (lint+typecheck+build+unit+E2E). Deps ajoutées: @sentry/nextjs, vitest, @testing-library/react, @testing-library/jest-dom, jsdom, @playwright/test. |

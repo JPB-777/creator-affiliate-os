@@ -3,6 +3,14 @@
     {
       "path": "/api/crons/scan-urls",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/crons/weekly-report",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/crons/cleanup-history",
+      "schedule": "0 3 * * 0"
     }
   ]
 }
