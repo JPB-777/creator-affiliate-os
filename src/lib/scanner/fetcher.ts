@@ -1,4 +1,11 @@
+import { validateUrl } from "./url-validator";
+
 export async function fetchPage(url: string) {
+  const validation = await validateUrl(url);
+  if (!validation.valid) {
+    throw new Error(`Blocked URL: ${validation.error}`);
+  }
+
   const response = await fetch(url, {
     headers: {
       "User-Agent": "AffiliateOS/1.0 (link-scanner)",

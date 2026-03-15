@@ -1,3 +1,5 @@
+import { validateUrl } from "./url-validator";
+
 export interface LinkCheckResult {
   url: string;
   status: "healthy" | "broken" | "redirect" | "timeout";
@@ -6,6 +8,12 @@ export interface LinkCheckResult {
 }
 
 export async function checkLink(url: string): Promise<LinkCheckResult> {
+  // Validate URL to prevent SSRF via extracted links
+  const validation = await validateUrl(url);
+  if (!validation.valid) {
+    return { url, status: "broken", httpStatusCode: null, resolvedUrl: null };
+  }
+
   try {
     const response = await fetch(url, {
       method: "HEAD",

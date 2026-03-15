@@ -37,9 +37,8 @@ interface OnboardingWizardProps {
 }
 
 const STEPS = ["welcome", "add-url", "scan-results", "first-earning", "complete"] as const;
-type Step = (typeof STEPS)[number];
 
-export function OnboardingWizard({ userName, completedSteps, urlAdded }: OnboardingWizardProps) {
+export function OnboardingWizard({ userName, completedSteps }: OnboardingWizardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

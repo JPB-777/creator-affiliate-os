@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { urls, links, earnings, scans } from "@/lib/db/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export type PeriodType = "week" | "month" | "quarter";
 

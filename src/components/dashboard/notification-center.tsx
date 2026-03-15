@@ -59,6 +59,7 @@ export function NotificationCenter({
 
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetch("/api/notifications/list")
       .then((r) => r.json())

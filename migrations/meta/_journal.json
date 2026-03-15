@@ -71,6 +71,13 @@
       "when": 1773494926844,
       "tag": "0009_outstanding_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1773588143141,
+      "tag": "0010_goofy_titania",
+      "breakpoints": true
     }
   ]
 }

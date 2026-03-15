@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { apiKeys, user as userTable } from "@/lib/db/schema";
+import { apiKeys } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createHash } from "crypto";
 import { NextRequest } from "next/server";

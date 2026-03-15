@@ -8,6 +8,8 @@ import {
   uuid,
   decimal,
   jsonb,
+  index,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // ============================================
@@ -111,9 +113,13 @@ export const urls = pgTable("urls", {
   brokenLinks: integer("broken_links").default(0),
   scanFrequency: scanFrequencyEnum("scan_frequency").default("daily").notNull(),
   lastScannedAt: timestamp("last_scanned_at"),
+  scanningLockedAt: timestamp("scanning_locked_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("urls_user_id_idx").on(table.userId),
+  unique("urls_user_url_unique").on(table.userId, table.url),
+]);
 
 export const affiliateNetworks = pgTable("affiliate_networks", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -143,7 +149,11 @@ export const links = pgTable("links", {
   suggestedReplacement: text("suggested_replacement"),
   lastCheckedAt: timestamp("last_checked_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("links_url_id_idx").on(table.urlId),
+  index("links_user_id_idx").on(table.userId),
+  index("links_affiliate_idx").on(table.urlId, table.isAffiliate),
+]);
 
 export const scans = pgTable("scans", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -161,7 +171,10 @@ export const scans = pgTable("scans", {
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("scans_url_id_idx").on(table.urlId),
+  index("scans_user_id_idx").on(table.userId),
+]);
 
 export const earnings = pgTable("earnings", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -177,7 +190,10 @@ export const earnings = pgTable("earnings", {
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("earnings_user_id_idx").on(table.userId),
+  index("earnings_url_id_idx").on(table.urlId),
+]);
 
 export const userPreferences = pgTable("user_preferences", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -210,7 +226,10 @@ export const linkStatusHistory = pgTable("link_status_history", {
   status: linkStatusEnum("status").notNull(),
   httpStatusCode: integer("http_status_code"),
   checkedAt: timestamp("checked_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("lsh_url_id_idx").on(table.urlId),
+  index("lsh_user_id_idx").on(table.userId),
+]);
 
 export const notifications = pgTable("notifications", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -223,7 +242,9 @@ export const notifications = pgTable("notifications", {
   actionUrl: text("action_url"),
   isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("notif_user_read_idx").on(table.userId, table.isRead),
+]);
 
 export const activityLog = pgTable("activity_log", {
   id: uuid("id").defaultRandom().primaryKey(),

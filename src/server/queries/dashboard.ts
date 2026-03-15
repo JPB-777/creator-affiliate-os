@@ -61,19 +61,17 @@ export async function getDashboardStats(userId: string) {
 }
 
 export async function getTopPerformingUrls(userId: string) {
-  // Join urls → links (by urlId) → earnings (by networkName)
-  // to find which pages' affiliate networks generate the most revenue
+  // Join urls → earnings directly by urlId (not via networkName)
   const rows = await db
     .select({
       urlId: urls.id,
       urlTitle: urls.title,
       urlUrl: urls.url,
       totalEarnings: sql<string>`coalesce(sum(${earnings.amount}::numeric), 0)::text`,
-      networkCount: sql<number>`count(distinct ${links.networkName})::int`,
+      networkCount: sql<number>`count(distinct ${earnings.networkName})::int`,
     })
     .from(urls)
-    .innerJoin(links, and(eq(links.urlId, urls.id), eq(links.isAffiliate, true)))
-    .innerJoin(earnings, and(eq(earnings.userId, userId), eq(earnings.networkName, links.networkName)))
+    .innerJoin(earnings, and(eq(earnings.urlId, urls.id), eq(earnings.userId, userId)))
     .where(eq(urls.userId, userId))
     .groupBy(urls.id, urls.title, urls.url)
     .orderBy(desc(sql`sum(${earnings.amount}::numeric)`))

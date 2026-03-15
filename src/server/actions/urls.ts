@@ -21,6 +21,16 @@ export async function addUrl(formData: FormData) {
     normalizedUrl = "https://" + normalizedUrl;
   }
 
+  // Check for existing URL (unique constraint)
+  const [existing] = await db
+    .select({ id: urls.id })
+    .from(urls)
+    .where(and(eq(urls.userId, user.id), eq(urls.url, normalizedUrl)));
+
+  if (existing) {
+    throw new Error("This URL has already been added.");
+  }
+
   const [newUrl] = await db
     .insert(urls)
     .values({

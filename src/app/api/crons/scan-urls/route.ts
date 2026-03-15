@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   for (const urlRecord of urlsToScan) {
     try {
-      await triggerScan(urlRecord.id, urlRecord.userId);
+      await triggerScan(urlRecord.id, urlRecord.userId, { skipRateLimit: true });
       results.push({ url: urlRecord.url, status: "success" });
     } catch (error) {
       results.push({

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { earnings, urls } from "@/lib/db/schema";
+import { earnings } from "@/lib/db/schema";
 import { eq, desc, sql, count, ilike, or, type SQL, and } from "drizzle-orm";
 
 export async function getEarnings(

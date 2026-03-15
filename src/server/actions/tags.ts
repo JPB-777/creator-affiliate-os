@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { urls } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 

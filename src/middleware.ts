@@ -17,9 +17,25 @@ const protectedPaths = [
 
 const authPaths = ["/sign-in", "/sign-up"];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("better-auth.session_token");
   const { pathname } = request.nextUrl;
+
+  // Rate limit auth POST requests (sign-in/sign-up form submissions)
+  if (
+    request.method === "POST" &&
+    pathname.startsWith("/api/auth")
+  ) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const { checkAuthRateLimit } = await import("@/lib/rate-limit");
+    const { success } = await checkAuthRateLimit(ip);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+  }
 
   // Redirect authenticated users away from auth pages
   if (sessionCookie && authPaths.some((p) => pathname.startsWith(p))) {
@@ -50,5 +66,6 @@ export const config = {
     "/content-drift/:path*",
     "/sign-in",
     "/sign-up",
+    "/api/auth/:path*",
   ],
 };

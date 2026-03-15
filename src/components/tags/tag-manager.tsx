@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { renameTag, deleteTag, mergeTags } from "@/server/actions/tags";
+import { renameTag, deleteTag } from "@/server/actions/tags";
 import { toast } from "sonner";
-import { Edit2, Trash2, Merge, Loader2 } from "lucide-react";
+import { Edit2, Trash2, Loader2 } from "lucide-react";
 
 interface TagInfo {
   name: string;
